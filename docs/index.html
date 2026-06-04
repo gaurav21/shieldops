@@ -349,14 +349,14 @@ a{color:var(--gold);text-decoration:none}
   <h2 class="title" style="color:var(--white)">What an engineering leader sees</h2>
   <p style="color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:8px">"Is this thing safe to run?"</p>
   <div class="g4" style="margin-top:32px">
-    <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">Active Sessions</div></div>
-    <div class="dash-card"><div class="dash-val">7</div><div class="dash-label">Auto-Merge Ready</div></div>
-    <div class="dash-card"><div class="dash-val">2</div><div class="dash-label">Human Review</div></div>
-    <div class="dash-card"><div class="dash-val">1</div><div class="dash-label">Blocked</div></div>
-    <div class="dash-card"><div class="dash-val">4</div><div class="dash-label">Breaking Changes Handled</div></div>
-    <div class="dash-card"><div class="dash-val">12%</div><div class="dash-label">Intervention Rate</div></div>
-    <div class="dash-card"><div class="dash-val">87%</div><div class="dash-label">Avg Confidence</div></div>
-    <div class="dash-card"><div class="dash-val">43m</div><div class="dash-label">Time to Verified Fix</div></div>
+    <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">Sessions Launched</div></div>
+    <div class="dash-card"><div class="dash-val">2</div><div class="dash-label">PRs Delivered</div></div>
+    <div class="dash-card"><div class="dash-val">1</div><div class="dash-label">Hero In Progress</div></div>
+    <div class="dash-card"><div class="dash-val">7</div><div class="dash-label">Issues Created</div></div>
+    <div class="dash-card"><div class="dash-val">1</div><div class="dash-label">Breaking Change (paramiko)</div></div>
+    <div class="dash-card"><div class="dash-val">0%</div><div class="dash-label">Intervention Rate</div></div>
+    <div class="dash-card"><div class="dash-val">5</div><div class="dash-label">Files Changed</div></div>
+    <div class="dash-card"><div class="dash-val">&lt;8m</div><div class="dash-label">Time to First PR</div></div>
   </div>
 </div>
 </div>
@@ -383,7 +383,52 @@ a{color:var(--gold);text-decoration:none}
 </div>
 </div>
 
-<!-- SLIDE 10: DEMO -->
+<!-- SLIDE 10: REAL PROOF — DEVIN PRs -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Real Results</p>
+  <h2 class="title">Devin shipped these PRs on <span class="gold">Apache Superset</span></h2>
+  <div class="g2" style="margin-top:28px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:1.4rem">🐳</span>
+        <h3 style="margin:0">PR #8 — Dockerfile Hardening</h3>
+      </div>
+      <p style="font-size:.82rem;color:var(--text-2);line-height:1.7">
+        <strong>Pinned base images to SHA256 digests</strong> for tamper-resistant builds.<br>
+        Purged dev packages (<code>libsasl2-dev</code>, <code>libpq-dev</code>, etc.) after build.<br>
+        Added explicit HEALTHCHECK params (<code>--interval=30s --timeout=10s</code>).<br>
+        Verified: <code>docker build</code> succeeds, <code>docker inspect</code> confirms non-root user.
+      </p>
+      <p style="font-size:.75rem;margin-top:10px">
+        <a href="https://github.com/gaurav21/superset/pull/8" target="_blank">github.com/gaurav21/superset/pull/8</a>
+        <span style="color:var(--gold);margin-left:8px">+20 −4</span>
+      </p>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:1.4rem">🔐</span>
+        <h3 style="margin:0">PR #9 — Paramiko CVE-2026-44405</h3>
+      </div>
+      <p style="font-size:.82rem;color:var(--text-2);line-height:1.7">
+        <strong>Upgraded paramiko 3.5.1 → 5.0.0</strong> to remove SHA-1 RSA operations.<br>
+        Identified breaking changes (GSSAPI removed, min DH modulus raised).<br>
+        Verified: Superset's <code>RSAKey.from_private_key()</code> API unchanged in 5.0.0.<br>
+        Updated <code>requirements/</code>, <code>pyproject.toml</code>, and license config.
+      </p>
+      <p style="font-size:.75rem;margin-top:10px">
+        <a href="https://github.com/gaurav21/superset/pull/9" target="_blank">github.com/gaurav21/superset/pull/9</a>
+        <span style="color:var(--gold);margin-left:8px">+8 −4</span>
+      </p>
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:24px;font-size:.85rem;color:var(--text-2)">
+    🏃 <strong>Flask 2.3 → 3.x hero session</strong> — in progress (breaking-change upgrade on 500K LOC codebase)
+  </p>
+</div>
+</div>
+
+<!-- SLIDE 11: DEMO VIDEO -->
 <div class="slide" data-bg="light">
 <div class="inner center">
   <p class="label">Demo</p>
@@ -430,12 +475,12 @@ a{color:var(--gold);text-decoration:none}
     <a href="https://github.com/gaurav21/shieldops" target="_blank" class="card gh-card center">
       <div style="font-size:2rem;margin-bottom:8px">⚙️</div>
       <h3>Solution Repo</h3>
-      <p style="color:var(--text-2);font-size:.88rem">gaurav21/shieldops</p>
+      <p style="color:var(--text-2);font-size:.88rem">gaurav21/shieldops — 3,700 lines Python</p>
     </a>
     <a href="https://github.com/gaurav21/superset" target="_blank" class="card gh-card center">
       <div style="font-size:2rem;margin-bottom:8px">🍴</div>
       <h3>Superset Fork</h3>
-      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset</p>
+      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset — 7 issues, 2+ Devin PRs</p>
     </a>
   </div>
   <p style="margin-top:48px;font-size:.85rem;color:var(--text-2)">Built by <strong>Gaurav Sharma</strong> · Devin AI + Datadog</p>
