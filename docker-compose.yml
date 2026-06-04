@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  shieldops:
+    build: .
+    container_name: shieldops
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - SHIELDOPS_AUTO_SCAN=false  # Set to true for scheduled scans
+      - REPO_PATH=/tmp/superset
+    volumes:
+      - superset-repo:/tmp/superset
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  superset-repo:
