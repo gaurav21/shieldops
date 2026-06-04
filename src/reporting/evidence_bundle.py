@@ -1,201 +1,132 @@
 from __future__ import annotations
 
-"""Evidence bundle builder — gives the reviewer everything they need to approve in 2 minutes.
-
-This is the quiet genius of the system: you're not removing the human, you're making
-the human's job trivial and auditable. That's what a VP buys.
+"""
+evidence_bundle.py — Build the 2-minute reviewer approval packet.
+Called after every Devin session that produces a HUMAN_REVIEW or AUTO_MERGE_READY decision.
 """
 
-import logging
+from dataclasses import dataclass
 from typing import Optional
-
-from ..scanner.models import Vulnerability
-from ..orchestrator.policy import PolicyResult, PolicyDecision
-
-logger = logging.getLogger(__name__)
+from src.orchestrator.policy import PolicyResult, PolicyDecision
 
 
-class EvidenceBundle:
-    """Builds the evidence bundle attached to PRs and issue comments.
-    
-    For `needs-human` PRs, this is what turns a 30-minute review into a 2-minute review.
-    For `auto-merge-ready` PRs, this is the audit trail that proves the policy worked.
-    For `blocked` results, this explains why and what to do next.
+@dataclass
+class DevinSessionResult:
+    session_id: str
+    pr_url: Optional[str]
+    status: str  # success | partial | failed
+    changes_summary: str
+    tests_passed: bool
+    breaking_changes_detected: bool
+    breaking_changes_notes: str
+    reachability_assessment: str
+    confidence: float
+    files_touched: list[str]
+    notes: str
+    duration_seconds: int
+    acu_used: float
+
+
+@dataclass
+class VulnerabilityContext:
+    cve_id: str
+    package: str
+    current_version: str
+    fixed_version: str
+    severity: str
+    advisory_url: str
+    upgrade_type: str  # patch | minor | major
+
+
+def build(
+    vuln: VulnerabilityContext,
+    result: DevinSessionResult,
+    policy: PolicyResult,
+) -> str:
     """
+    Return a markdown string suitable for use as a GitHub PR body or issue comment.
+    Aim: reviewer approves in < 2 minutes with full confidence.
+    """
+    decision_badge = {
+        PolicyDecision.AUTO_MERGE_READY: "🟢 AUTO-MERGE READY",
+        PolicyDecision.HUMAN_REVIEW: "🟡 NEEDS HUMAN REVIEW",
+        PolicyDecision.BLOCKED: "🔴 BLOCKED — DO NOT MERGE",
+    }[policy.decision]
 
-    def build_pr_description(
-        self,
-        vuln: Vulnerability,
-        policy: PolicyResult,
-        devin_output: Optional[dict] = None,
-    ) -> str:
-        """Build a PR description with the full evidence bundle."""
-        output = devin_output or {}
-        
-        decision_emoji = {
-            PolicyDecision.AUTO_MERGE_READY: "🟢",
-            PolicyDecision.HUMAN_REVIEW: "🟡",
-            PolicyDecision.BLOCKED: "🔴",
-        }
-        emoji = decision_emoji.get(policy.decision, "⚪")
+    risk_section = (
+        "\n".join(f"- ⚠️ `{flag}`" for flag in policy.risk_flags)
+        if policy.risk_flags
+        else "- ✅ No risk flags"
+    )
 
-        sections = []
+    files_section = (
+        "\n".join(f"- `{f}`" for f in result.files_touched[:20])
+        if result.files_touched
+        else "- _(none reported)_"
+    )
+    if len(result.files_touched) > 20:
+        files_section += f"\n- _...and {len(result.files_touched) - 20} more_"
 
-        # Header
-        sections.append(f"""## {emoji} ShieldOps Remediation — {policy.decision.value.replace('_', ' ').title()}
+    bundle = f"""## {decision_badge}
 
-**Vulnerability:** {vuln.title}
-**CVE:** {vuln.cve_id or 'N/A'} | **Severity:** {vuln.severity.value.upper()}
-**Package:** `{vuln.package_name}` `{vuln.current_version}` → `{vuln.fixed_version or 'latest'}`
-**Upgrade Type:** {policy.upgrade_type.value} | **Confidence:** {policy.confidence:.0%}
-**Policy Decision:** `{policy.decision.value}` — {policy.reason}""")
+> **Policy reason:** {policy.reason}
 
-        # What changed & why
-        changes = output.get("changes_summary", "No summary available")
-        sections.append(f"""### 📝 What Changed & Why
-{changes}
+---
 
-**Advisory:** {vuln.advisory_url or 'N/A'}""")
-
-        # Reachability assessment
-        reachability = output.get("reachability_assessment", "")
-        if reachability:
-            sections.append(f"""### 🎯 Reachability Assessment
-{reachability}""")
-
-        # Breaking changes
-        if policy.breaking_changes_detected:
-            breaking_notes = output.get("breaking_changes_notes", "Breaking changes were detected and fixed.")
-            sections.append(f"""### ⚠️ Breaking Changes Detected & Fixed
-{breaking_notes}
-
-> This is the work Dependabot *can't* do — the upgrade broke existing code and Devin 
-> read the CHANGELOG, found the affected call sites, and fixed them.""")
-
-        # Test results
-        tests_passed = output.get("tests_passed", False)
-        test_emoji = "✅" if tests_passed else "❌"
-        sections.append(f"""### {test_emoji} Test Results
-**Tests passed:** {"Yes" if tests_passed else "No"}""")
-
-        notes = output.get("notes", "")
-        if notes:
-            sections.append(f"**Notes:** {notes}")
-
-        # Blast radius
-        files = policy.files_touched
-        if files:
-            file_list = "\n".join(f"- `{f}`" for f in files[:20])
-            if policy.sensitive_paths_touched:
-                sensitive_list = "\n".join(f"- ⚠️ `{f}` (sensitive)" for f in policy.sensitive_paths_touched)
-                sections.append(f"""### 💥 Blast Radius ({len(files)} files)
-**Sensitive paths touched:**
-{sensitive_list}
-
-**All files:**
-{file_list}""")
-            else:
-                sections.append(f"""### 💥 Blast Radius ({len(files)} files)
-No sensitive paths touched.
-{file_list}""")
-
-        # Reviewer action
-        if policy.decision == PolicyDecision.AUTO_MERGE_READY:
-            sections.append("""### ✅ Reviewer Action
-This change meets all auto-merge criteria. It can be merged without manual review.
-
-**Why auto-merge is safe:**
-- Tests pass ✅
-- No breaking changes detected ✅
-- Confidence ≥ 80% ✅
-- Patch/minor dependency upgrade ✅
-- No sensitive paths touched ✅""")
-
-        elif policy.decision == PolicyDecision.HUMAN_REVIEW:
-            sections.append(f"""### 👀 Reviewer Action Required
-This change requires human review because: **{policy.reason}**
-
-**What to check:**
-1. Review the diff — focus on the changed call sites
-2. Verify the CHANGELOG notes align with the changes
-3. Confirm tests cover the modified paths
-4. Approve and merge when satisfied""")
-
-        elif policy.decision == PolicyDecision.BLOCKED:
-            sections.append(f"""### 🚫 Blocked — Manual Intervention Required
-This remediation was blocked: **{policy.reason}**
-
-The PR was NOT created or merged. Please investigate manually.""")
-
-        # Footer
-        sections.append("""---
-*🛡️ Generated by [ShieldOps](https://github.com/gsharma21/devin-devsecsops) — Autonomous Security Remediation Platform*
-*Powered by [Devin AI](https://devin.ai) + [Datadog](https://datadoghq.com)*""")
-
-        return "\n\n".join(sections)
-
-    def build_issue_comment(
-        self,
-        vuln: Vulnerability,
-        policy: PolicyResult,
-        devin_output: Optional[dict] = None,
-        pr_url: Optional[str] = None,
-        session_url: Optional[str] = None,
-    ) -> str:
-        """Build a GitHub issue comment with status update and evidence."""
-        output = devin_output or {}
-        
-        decision_emoji = {
-            PolicyDecision.AUTO_MERGE_READY: "🟢",
-            PolicyDecision.HUMAN_REVIEW: "🟡",
-            PolicyDecision.BLOCKED: "🔴",
-        }
-        emoji = decision_emoji.get(policy.decision, "⚪")
-
-        lines = [f"## {emoji} ShieldOps: {policy.decision.value.replace('_', ' ').title()}"]
-
-        if policy.decision == PolicyDecision.AUTO_MERGE_READY:
-            lines.append(f"""
-Devin has fixed this vulnerability and the change is **ready to auto-merge**.
-
+### 🔍 Vulnerability
 | Field | Value |
-|-------|-------|
-| PR | {pr_url or 'N/A'} |
-| Confidence | {policy.confidence:.0%} |
-| Tests | ✅ Passed |
-| Breaking Changes | None |
-| Upgrade | `{vuln.current_version}` → `{vuln.fixed_version}` ({policy.upgrade_type.value}) |
-| Devin Session | {session_url or 'N/A'} |""")
+|---|---|
+| CVE | [{vuln.cve_id}]({vuln.advisory_url}) |
+| Package | `{vuln.package}` |
+| Upgrade | `{vuln.current_version}` → `{vuln.fixed_version}` ({vuln.upgrade_type}) |
+| Severity | `{vuln.severity.upper()}` |
 
-        elif policy.decision == PolicyDecision.HUMAN_REVIEW:
-            lines.append(f"""
-Devin has created a fix, but it **needs human review** before merging.
+---
 
-**Why:** {policy.reason}
+### 🤖 What Devin Did
+{result.changes_summary}
 
-| Field | Value |
-|-------|-------|
-| PR | {pr_url or 'N/A'} |
-| Confidence | {policy.confidence:.0%} |
-| Tests | {"✅ Passed" if output.get("tests_passed") else "❌ Failed"} |
-| Breaking Changes | {"⚠️ Yes — fixed by Devin" if policy.breaking_changes_detected else "None"} |
-| Upgrade | `{vuln.current_version}` → `{vuln.fixed_version}` ({policy.upgrade_type.value}) |
-| Devin Session | {session_url or 'N/A'} |
+---
 
-The PR description contains a full evidence bundle for quick review.""")
+### 🧪 Test Result
+| | |
+|---|---|
+| Tests passed | {"✅ Yes" if result.tests_passed else "❌ No"} |
+| Breaking changes | {"⚠️ Yes — see below" if result.breaking_changes_detected else "✅ None detected"} |
+| Confidence | {result.confidence:.0%} |
 
-        elif policy.decision == PolicyDecision.BLOCKED:
-            lines.append(f"""
-Automated remediation was **blocked**. Manual intervention needed.
+{"**Breaking changes handled:**" + chr(10) + result.breaking_changes_notes if result.breaking_changes_detected else ""}
 
-**Reason:** {policy.reason}
+---
 
-| Field | Value |
-|-------|-------|
-| Confidence | {policy.confidence:.0%} |
-| Devin Session | {session_url or 'N/A'} |
+### 🎯 Reachability
+{result.reachability_assessment or "_Not assessed_"}
 
-Please investigate the Devin session for details on what went wrong.""")
+---
 
-        lines.append("\n---\n*🤖 ShieldOps — Autonomous Security Remediation*")
-        return "\n".join(lines)
+### 📁 Files Touched ({len(result.files_touched)})
+{files_section}
+
+---
+
+### ⚠️ Risk Flags
+{risk_section}
+
+---
+
+### 📋 Reviewer Notes
+{policy.reviewer_notes}
+
+---
+
+### 📊 Session Metadata
+| | |
+|---|---|
+| Session ID | `{result.session_id}` |
+| Duration | {result.duration_seconds // 60}m {result.duration_seconds % 60}s |
+| ACU used | {result.acu_used:.1f} |
+| Devin status | `{result.status}` |
+
+_Generated by ShieldOps — Trust Control Plane for Autonomous Engineering_
+"""
+    return bundle.strip()

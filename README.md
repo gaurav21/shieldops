@@ -2,7 +2,7 @@
 
 > **Scan → Triage → Fix → Verify → Report — All Automatically**
 
-ShieldOps is an event-driven automation platform that detects security vulnerabilities in your codebase and uses [Devin AI](https://devin.ai) to automatically remediate them — with full [Datadog](https://datadoghq.com) observability.
+ShieldOps is a **trust control plane for autonomous security remediation**. It doesn't compete with Dependabot on easy patch bumps — it handles the 20% of vulnerabilities that Dependabot abandons: breaking-change upgrades that require reading migration guides, fixing call sites, iterating on test failures, and producing evidence a reviewer can approve in two minutes.
 
 ![Architecture](docs/architecture-diagram.png)
 
@@ -64,7 +64,7 @@ Not all vulnerabilities are equal. ShieldOps scores each one:
 
 ### Datadog Observability
 
-The **ShieldOps Command Center** dashboard answers the VP's question: *"Is this working?"*
+The **ShieldOps Agent Trust Control Plane** dashboard answers the VP's question: *"Is it safe to run a fleet of autonomous agents against my codebase?"*
 
 - 📊 Open vulnerabilities (burn-down chart)
 - 🤖 Active Devin sessions
@@ -84,8 +84,8 @@ The **ShieldOps Command Center** dashboard answers the VP's question: *"Is this 
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/gsharma21/devin-devsecsops.git
-cd devin-devsecsops
+git clone https://github.com/gaurav21/shieldops.git
+cd shieldops
 cp .env.example .env
 # Edit .env with your API keys
 ```
@@ -189,9 +189,20 @@ src/
 | `shieldops.scan.duration_seconds` | Gauge | Scan execution time |
 | `shieldops.scan.vulnerabilities_found` | Gauge | Vulns found per scan |
 
+## 🆚 Why Not Just Dependabot?
+
+| | Dependabot | ShieldOps + Devin |
+|---|---|---|
+| Patch/minor bumps | ✅ | ✅ |
+| Breaking-change upgrades | ❌ Opens a red PR, stops | ✅ Fixes call sites, iterates to green |
+| Reads CHANGELOG to anticipate breakage | ❌ | ✅ |
+| Reachability — "does this CVE matter here?" | ❌ | ✅ |
+| Routes changes: auto-merge vs human-gate vs block | ❌ | ✅ |
+| Gives the reviewer an evidence bundle | ❌ | ✅ |
+
 ## 🎥 Demo Video
 
-[Watch the 5-minute Loom walkthrough →](#)
+[Watch the 5-minute Loom walkthrough →](docs/DEMO.md)
 
 ## 📝 Blog Post
 
@@ -221,4 +232,4 @@ That's the difference between automation and intelligence.
 
 ---
 
-*Built by [Gaurav Sharma](https://github.com/gsharma21) as a demonstration of event-driven AI-powered DevSecOps.*
+*Built by [Gaurav Sharma](https://github.com/gaurav21) as a demonstration of autonomous security remediation with Devin AI.*

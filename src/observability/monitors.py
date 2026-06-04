@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-"""Datadog monitors — trust-oriented alerting for the agent fleet.
-
-v2: Alert on *trust*, not just failure. These monitors answer:
-  "Is the fleet safe to run unsupervised right now?"
+"""
+Datadog monitors — trust-oriented alerting for the agent fleet.
+V1 monitors kept, V2 trust monitors added.
 """
 
 import logging
@@ -18,105 +17,78 @@ logger = logging.getLogger(__name__)
 P = "shieldops"
 
 MONITORS = [
-    # 1. Fleet needs babysitting
+    # === V1 (kept) ===
     {
-        "name": "[ShieldOps] Intervention Rate Spiking",
-        "type": "metric alert",
-        "query": f"avg(last_1h):avg:{P}.devin.intervention_rate{{*}} > 40",
-        "message": (
-            "🤖 ShieldOps: The fleet needs babysitting.\n\n"
-            "{{#is_alert}}\n"
-            "More than 40% of Devin sessions needed human follow-up messages. "
-            "This means the fleet is not running autonomously — investigate prompt quality, "
-            "session configs, or repo access issues.\n"
-            "{{/is_alert}}\n\n"
-            "{{#is_recovery}}\n"
-            "✅ Intervention rate back to normal — fleet running autonomously.\n"
-            "{{/is_recovery}}"
-        ),
-        "tags": ["shieldops", "trust", "fleet"],
-        "options": {"thresholds": {"critical": 40, "warning": 25}, "notify_no_data": False},
-    },
-    # 2. Policy safety net — should never fire, proves the boundary works
-    {
-        "name": "[ShieldOps] Low-Confidence Change Auto-Merged",
+        "name": "[ShieldOps] Devin Session Failure Rate High",
         "type": "metric alert",
         "query": (
-            f"avg(last_15m):avg:{P}.remediation.confidence{{decision:auto_merge_ready}} < 0.8"
+            f"sum(last_1h):sum:{P}.devin.sessions.failed{{*}}.as_count() / "
+            f"sum:{P}.devin.sessions.created{{*}}.as_count() * 100 > 30"
         ),
-        "message": (
-            "🚨 ShieldOps: A change was routed to auto-merge with confidence below 80%.\n\n"
-            "{{#is_alert}}\n"
-            "The policy boundary may have a gap. This monitor should *never* fire — "
-            "if it does, review the policy engine logic immediately.\n"
-            "{{/is_alert}}"
-        ),
-        "tags": ["shieldops", "trust", "safety-net"],
-        "options": {"thresholds": {"critical": 0.8}, "notify_no_data": False},
+        "message": "🚨 ShieldOps: >30% of Devin sessions are failing in the last hour.",
+        "tags": ["shieldops", "devin", "security"],
+        "options": {"thresholds": {"critical": 30, "warning": 20}, "notify_no_data": False},
     },
-    # 3. Agent stuck
-    {
-        "name": "[ShieldOps] Devin Session Stuck > 30 Minutes",
-        "type": "metric alert",
-        "query": f"avg(last_30m):avg:{P}.devin.sessions.active{{*}} > 0",
-        "message": (
-            "⏱️ ShieldOps: A Devin session appears stuck.\n\n"
-            "{{#is_alert}}\n"
-            "A session has been active for >30 minutes. Check if it's blocked "
-            "and needs a human intervention message.\n"
-            "{{/is_alert}}"
-        ),
-        "tags": ["shieldops", "fleet", "health"],
-        "options": {"thresholds": {"critical": 0}, "notify_no_data": False},
-    },
-    # 4. Cost guardrail
-    {
-        "name": "[ShieldOps] ACU Cost Per Fix Exceeding Budget",
-        "type": "metric alert",
-        "query": f"avg(last_1h):avg:{P}.devin.cost_acu{{*}} > 8",
-        "message": (
-            "💰 ShieldOps: Cost per fix is exceeding budget.\n\n"
-            "{{#is_alert}}\n"
-            "Average ACU cost per session is above 8 ACU. Review session prompts "
-            "and max_acu_limit settings. Consider narrowing prompt scope.\n"
-            "{{/is_alert}}"
-        ),
-        "tags": ["shieldops", "cost", "budget"],
-        "options": {"thresholds": {"critical": 8, "warning": 5}, "notify_no_data": False},
-    },
-    # 5. Critical vuln SLO
     {
         "name": "[ShieldOps] Critical Vulnerability Open > 4 Hours",
         "type": "metric alert",
         "query": f"avg(last_4h):avg:{P}.vulnerabilities.by_severity{{severity:critical}} > 0",
-        "message": (
-            "⚠️ ShieldOps: Critical vulnerability unresolved for 4+ hours.\n\n"
-            "{{#is_alert}}\n"
-            "Review the ShieldOps dashboard and check Devin session status.\n"
-            "{{/is_alert}}"
-        ),
+        "message": "⚠️ ShieldOps: Critical vulnerability unresolved for 4+ hours.",
         "tags": ["shieldops", "security", "slo"],
         "options": {"thresholds": {"critical": 0}, "notify_no_data": False},
     },
-    # 6. Scanner health
     {
         "name": "[ShieldOps] No Scans Completed in 24 Hours",
         "type": "metric alert",
         "query": f"sum(last_24h):sum:{P}.scan.vulnerabilities_found{{*}}.as_count() < 1",
-        "message": (
-            "🔍 ShieldOps: Scanner may be down.\n\n"
-            "{{#is_alert}}\n"
-            "No scans completed in 24h. Verify the ShieldOps container is running.\n"
-            "{{/is_alert}}"
-        ),
+        "message": "🔍 ShieldOps: Scanner may be down — no scans in 24h.",
         "tags": ["shieldops", "scanner", "health"],
         "options": {"thresholds": {"critical": 1}, "notify_no_data": True, "no_data_timeframe": 1440},
+    },
+
+    # === V2 Trust monitors (new) ===
+    {
+        "name": "[ShieldOps] Devin Fleet Needs Babysitting",
+        "type": "metric alert",
+        "query": f"avg(last_15m):avg:{P}.devin.needed_intervention{{*}} > 0.4",
+        "message": (
+            "More than 40% of active Devin sessions required a follow-up message in the last "
+            "15 minutes. The fleet may be stuck on a hard class of vulnerability. "
+            "@slack-shieldops-alerts"
+        ),
+        "tags": ["shieldops", "trust", "intervention"],
+        "options": {"thresholds": {"critical": 0.4, "warning": 0.25}, "notify_no_data": False},
+    },
+    {
+        "name": "[ShieldOps] ⚠️ Auto-Merge Fired with Low Confidence — Policy Boundary Breach",
+        "type": "metric alert",
+        "query": (
+            f"avg(last_5m):avg:{P}.remediation.confidence{{decision:auto_merge_ready}} < 0.8"
+        ),
+        "message": (
+            "A change was routed to AUTO_MERGE_READY with confidence below 0.8. "
+            "This should never happen if the policy engine is working correctly. "
+            "Investigate immediately. @pagerduty-shieldops"
+        ),
+        "tags": ["shieldops", "trust", "policy-breach"],
+        "options": {"thresholds": {"critical": 0.8}, "notify_no_data": False},
+    },
+    {
+        "name": "[ShieldOps] Devin Session Stuck",
+        "type": "metric alert",
+        "query": f"min(last_30m):min:{P}.devin.sessions.active{{*}} > 0",
+        "message": (
+            "A Devin session has been active for > 30 minutes without reaching a terminal state. "
+            "It may be stuck. Session ID available in the event stream. @slack-shieldops-alerts"
+        ),
+        "tags": ["shieldops", "trust", "stuck"],
+        "options": {"thresholds": {"critical": 1}, "notify_no_data": False},
     },
 ]
 
 
 class MonitorBuilder:
-    """Creates trust-oriented Datadog monitors."""
+    """Creates Datadog monitors."""
 
     def __init__(self, config: DatadogConfig):
         self.config = config

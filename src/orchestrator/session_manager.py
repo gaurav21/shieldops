@@ -2,8 +2,9 @@ from __future__ import annotations
 
 """Session manager — lifecycle management for Devin remediation sessions.
 
-v2: Integrates the Policy Engine and Evidence Bundle. Tracks interventions
-(follow-up messages sent to Devin) as a fleet health metric.
+Tracks interventions (follow-up messages) as a fleet health metric.
+Policy evaluation happens in main.py after session completes — this module
+just manages the Devin session lifecycle and returns results.
 """
 
 import asyncio
@@ -12,31 +13,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Callable, Awaitable
 
+from datadog import statsd
+
 from .devin_client import DevinClient, DevinSession
-from .prompt_builder import PromptBuilder
-from .policy import PolicyEngine, PolicyResult, PolicyDecision
+from .prompt_builder import PromptBuilder, STRUCTURED_OUTPUT_SCHEMA
 from .triage import TriageDecision
 from ..scanner.models import RemediationStatus, Vulnerability
 
 logger = logging.getLogger(__name__)
-
-
-# Extended structured output schema (v2 — feeds the policy engine)
-STRUCTURED_OUTPUT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "status": {"type": "string", "enum": ["success", "partial", "failed"]},
-        "pr_url": {"type": "string"},
-        "changes_summary": {"type": "string"},
-        "tests_passed": {"type": "boolean"},
-        "breaking_changes_detected": {"type": "boolean"},
-        "breaking_changes_notes": {"type": "string"},
-        "reachability_assessment": {"type": "string"},
-        "confidence": {"type": "number"},
-        "files_touched": {"type": "array", "items": {"type": "string"}},
-        "notes": {"type": "string"},
-    },
-}
 
 
 @dataclass
@@ -48,9 +32,8 @@ class RemediationTask:
     completed_at: Optional[datetime] = None
     pr_url: Optional[str] = None
     error: Optional[str] = None
-    policy_result: Optional[PolicyResult] = None
     devin_output: Optional[dict] = None
-    interventions: int = 0  # count of follow-up messages sent to Devin
+    intervention_count: int = 0
 
     @property
     def vuln(self) -> Vulnerability:
@@ -65,12 +48,9 @@ class RemediationTask:
     @property
     def is_complete(self) -> bool:
         return self.vuln.status in (
-            RemediationStatus.PR_CREATED,
-            RemediationStatus.PR_MERGED,
-            RemediationStatus.AUTO_MERGE_READY,
-            RemediationStatus.HUMAN_REVIEW,
-            RemediationStatus.BLOCKED,
-            RemediationStatus.FAILED,
+            RemediationStatus.PR_CREATED, RemediationStatus.PR_MERGED,
+            RemediationStatus.AUTO_MERGE_READY, RemediationStatus.HUMAN_REVIEW,
+            RemediationStatus.BLOCKED, RemediationStatus.FAILED,
             RemediationStatus.SKIPPED,
         )
 
@@ -80,20 +60,18 @@ StatusCallback = Callable[[RemediationTask, str], Awaitable[None]]
 
 
 class SessionManager:
-    """Manages Devin sessions with policy evaluation and evidence bundling."""
+    """Manages Devin sessions for vulnerability remediation."""
 
     def __init__(
         self,
         devin_client: DevinClient,
         prompt_builder: PromptBuilder,
-        policy_engine: Optional[PolicyEngine] = None,
         max_concurrent: int = 3,
         poll_interval: int = 15,
         session_timeout: int = 3600,
     ):
         self.devin = devin_client
         self.prompts = prompt_builder
-        self.policy = policy_engine or PolicyEngine()
         self.max_concurrent = max_concurrent
         self.poll_interval = poll_interval
         self.session_timeout = session_timeout
@@ -113,7 +91,7 @@ class SessionManager:
                 logger.error(f"Callback error: {e}")
 
     async def remediate_batch(self, decisions: list[TriageDecision]) -> list[RemediationTask]:
-        """Process a batch of triage decisions through Devin + policy."""
+        """Process a batch of triage decisions through Devin."""
         actionable = [d for d in decisions if d.should_remediate]
         logger.info(f"Starting remediation batch: {len(actionable)} vulnerabilities")
 
@@ -123,18 +101,16 @@ class SessionManager:
             tasks.append(task)
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
-
         completed = []
         for r in results:
             if isinstance(r, Exception):
                 logger.error(f"Remediation task failed: {r}")
             elif r:
                 completed.append(r)
-
         return completed
 
     async def _remediate_one(self, decision: TriageDecision) -> RemediationTask:
-        """Remediate a single vulnerability: Devin session → policy evaluation → evidence."""
+        """Remediate a single vulnerability via Devin session."""
         task = RemediationTask(decision=decision)
 
         async with self._semaphore:
@@ -142,10 +118,8 @@ class SessionManager:
                 task.started_at = datetime.utcnow()
                 task.vuln.status = RemediationStatus.IN_PROGRESS
 
-                # Build context-aware prompt (v2: includes breaking-change instructions)
                 prompt = self.prompts.build_prompt(task.vuln)
 
-                # Tags for fleet tracking
                 tags = [
                     f"severity:{task.vuln.severity.value}",
                     f"type:{task.vuln.vuln_type.value}",
@@ -156,7 +130,6 @@ class SessionManager:
                 if task.vuln.github_issue_number:
                     tags.append(f"issue:{task.vuln.github_issue_number}")
 
-                # Create Devin session with extended structured output
                 session = await self.devin.create_session(
                     prompt=prompt,
                     title=f"[ShieldOps] {task.vuln.title}",
@@ -170,39 +143,10 @@ class SessionManager:
                 self.active_tasks[session.session_id] = task
 
                 await self._notify(task, "session_created")
-                logger.info(
-                    f"Devin session {session.session_id} for {task.vuln.package_name} — {session.url}"
-                )
+                logger.info(f"Devin session {session.session_id} for {task.vuln.package_name} — {session.url}")
 
                 # Poll for completion
                 await self._poll_session(task)
-
-                # === Policy evaluation (v2 — the trust boundary) ===
-                if task.devin_session and task.devin_output is not None:
-                    policy_result = self.policy.evaluate(
-                        vuln=task.vuln,
-                        devin_output=task.devin_output,
-                        devin_status=task.devin_session.status,
-                    )
-                    task.policy_result = policy_result
-                    task.vuln.policy_decision = policy_result.decision.value
-                    task.vuln.confidence = policy_result.confidence
-
-                    # Map policy decision to remediation status
-                    if policy_result.decision == PolicyDecision.AUTO_MERGE_READY:
-                        task.vuln.status = RemediationStatus.AUTO_MERGE_READY
-                        await self._notify(task, "auto_merge_ready")
-                    elif policy_result.decision == PolicyDecision.HUMAN_REVIEW:
-                        task.vuln.status = RemediationStatus.HUMAN_REVIEW
-                        await self._notify(task, "human_review")
-                    elif policy_result.decision == PolicyDecision.BLOCKED:
-                        task.vuln.status = RemediationStatus.BLOCKED
-                        await self._notify(task, "blocked")
-
-                    logger.info(
-                        f"Policy: {policy_result.decision.value} for {task.vuln.package_name} "
-                        f"— {policy_result.evidence_summary}"
-                    )
 
             except Exception as e:
                 task.error = str(e)
@@ -212,6 +156,20 @@ class SessionManager:
                 logger.error(f"Remediation failed for {task.vuln.package_name}: {e}")
 
             finally:
+                # Emit intervention metrics at session close
+                session_id = task.devin_session.session_id if task.devin_session else "unknown"
+                severity = task.vuln.severity.value
+                statsd.gauge(
+                    "shieldops.devin.intervention_count",
+                    task.intervention_count,
+                    tags=[f"session_id:{session_id}", f"severity:{severity}"],
+                )
+                statsd.gauge(
+                    "shieldops.devin.needed_intervention",
+                    1 if task.intervention_count > 0 else 0,
+                    tags=[f"session_id:{session_id}"],
+                )
+
                 if task.devin_session:
                     self.active_tasks.pop(task.devin_session.session_id, None)
                 self.completed_tasks.append(task)
@@ -245,9 +203,8 @@ class SessionManager:
 
                 # Session completed
                 task.completed_at = datetime.utcnow()
-
-                # Extract structured output and PR URL
                 task.devin_output = session.structured_output or {}
+
                 if session.pull_request_url:
                     task.pr_url = session.pull_request_url
                 elif task.devin_output.get("pr_url"):
@@ -268,11 +225,11 @@ class SessionManager:
                 continue
 
     async def send_intervention(self, session_id: str, message: str) -> bool:
-        """Send a follow-up message to a Devin session (counts as an intervention)."""
+        """Send a follow-up message to a Devin session (counts as intervention)."""
         task = self.active_tasks.get(session_id)
         if task:
-            task.interventions += 1
-            logger.info(f"Intervention #{task.interventions} for {session_id}")
+            task.intervention_count += 1
+            logger.info(f"Intervention #{task.intervention_count} for {session_id}")
 
         success = await self.devin.send_message(session_id, message)
         if success and task:
@@ -280,7 +237,7 @@ class SessionManager:
         return success
 
     def get_stats(self) -> dict:
-        """Get current fleet statistics — the numbers a VP sees."""
+        """Get current fleet statistics."""
         completed = self.completed_tasks
         succeeded = [t for t in completed if t.vuln.status in (
             RemediationStatus.PR_CREATED, RemediationStatus.AUTO_MERGE_READY,
@@ -288,56 +245,21 @@ class SessionManager:
         failed = [t for t in completed if t.vuln.status in (
             RemediationStatus.FAILED, RemediationStatus.BLOCKED)]
 
-        # Trust split
-        auto_merge = [t for t in completed if t.policy_result
-                      and t.policy_result.decision == PolicyDecision.AUTO_MERGE_READY]
-        human_review = [t for t in completed if t.policy_result
-                        and t.policy_result.decision == PolicyDecision.HUMAN_REVIEW]
-        blocked = [t for t in completed if t.policy_result
-                   and t.policy_result.decision == PolicyDecision.BLOCKED]
-
-        # Breaking changes handled — the hero metric
-        breaking_handled = [t for t in completed if t.policy_result
-                           and t.policy_result.breaking_changes_detected
-                           and t.vuln.status in (RemediationStatus.AUTO_MERGE_READY,
-                                                  RemediationStatus.HUMAN_REVIEW)]
-
-        # Durations
         durations = [t.duration_seconds for t in succeeded if t.duration_seconds]
         avg_duration = sum(durations) / len(durations) if durations else 0
 
-        # Intervention rate
-        total_interventions = sum(t.interventions for t in completed)
-        intervention_rate = (sum(1 for t in completed if t.interventions > 0)
+        total_interventions = sum(t.intervention_count for t in completed)
+        intervention_rate = (sum(1 for t in completed if t.intervention_count > 0)
                             / max(len(completed), 1) * 100)
 
-        # Confidence distribution
-        confidences = [t.policy_result.confidence for t in completed
-                      if t.policy_result and t.policy_result.confidence > 0]
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0
-
         return {
-            # Fleet
             "active_sessions": len(self.active_tasks),
             "completed": len(completed),
             "succeeded": len(succeeded),
             "failed": len(failed),
             "success_rate": len(succeeded) / max(len(completed), 1) * 100,
             "avg_duration_seconds": avg_duration,
-
-            # Trust split
-            "auto_merge_ready": len(auto_merge),
-            "human_review": len(human_review),
-            "blocked": len(blocked),
-
-            # The Dependabot-can't metric
-            "breaking_changes_handled": len(breaking_handled),
-
-            # Fleet health
             "intervention_rate": intervention_rate,
             "total_interventions": total_interventions,
-            "avg_confidence": avg_confidence,
-
-            # PRs
             "prs_created": len(succeeded),
         }

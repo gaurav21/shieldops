@@ -1,182 +1,159 @@
 from __future__ import annotations
 
-"""Datadog metrics — reframed as Agent Trust Control Plane.
-
-v2: Stop observing *vulnerabilities*. Start observing *the autonomous workforce*.
-Fleet health, trust split, cost, and the "Dependabot can't" metrics are the headline.
+"""
+Datadog metrics via DogStatsD.
+V2: Fleet health, trust split, cost, breaking-change metrics alongside V1 vulnerability metrics.
 """
 
 import logging
 import time
+from typing import Optional
 
+from datadog import statsd
 import httpx
 
 from ..config import DatadogConfig
-from ..orchestrator.session_manager import RemediationTask
-from ..orchestrator.policy import PolicyResult, PolicyDecision
-from ..scanner.models import ScanResult
 
 logger = logging.getLogger(__name__)
 
 
-class MetricsEmitter:
-    """Emits custom metrics to Datadog — the numbers a VP watches."""
+# ========== V1 — Vulnerability posture (kept) ==========
+
+def record_scan_completed(scanner: str, vuln_count: int, duration_seconds: float):
+    statsd.gauge("shieldops.scan.vulnerabilities_found", vuln_count, tags=[f"scanner:{scanner}"])
+    statsd.gauge("shieldops.scan.duration_seconds", duration_seconds, tags=[f"scanner:{scanner}"])
+
+
+def record_vulnerability_counts(open_count: int, fixed_count: int):
+    statsd.gauge("shieldops.vulnerabilities.open", open_count)
+    statsd.gauge("shieldops.vulnerabilities.fixed", fixed_count)
+
+
+def record_vulnerability_by_severity(severity: str, count: int):
+    statsd.gauge("shieldops.vulnerabilities.by_severity", count, tags=[f"severity:{severity}"])
+
+
+def record_session_created(session_id: str, severity: str, package: str):
+    statsd.increment("shieldops.devin.sessions.created",
+                     tags=[f"session_id:{session_id}", f"severity:{severity}", f"package:{package}"])
+
+
+def record_session_completed(session_id: str, severity: str, duration_seconds: float):
+    statsd.increment("shieldops.devin.sessions.completed",
+                     tags=[f"session_id:{session_id}", f"severity:{severity}"])
+    statsd.gauge("shieldops.devin.session.duration_seconds", duration_seconds,
+                 tags=[f"session_id:{session_id}", f"severity:{severity}"])
+
+
+def record_session_failed(session_id: str, severity: str):
+    statsd.increment("shieldops.devin.sessions.failed",
+                     tags=[f"session_id:{session_id}", f"severity:{severity}"])
+
+
+def record_active_sessions(count: int):
+    statsd.gauge("shieldops.devin.sessions.active", count)
+
+
+# ========== V2 — Fleet trust metrics (new) ==========
+
+def record_policy_decision(decision: str, severity: str, upgrade_type: str):
+    """Emit when the policy engine routes a remediation."""
+    statsd.increment(
+        "shieldops.policy.decision",
+        tags=[
+            f"decision:{decision}",
+            f"severity:{severity}",
+            f"upgrade_type:{upgrade_type}",
+        ],
+    )
+
+
+def record_breaking_change_handled(package: str, severity: str):
+    """Emit when Devin successfully handles a breaking-change upgrade."""
+    statsd.increment(
+        "shieldops.remediation.breaking_changes_handled",
+        tags=[f"package:{package}", f"severity:{severity}"],
+    )
+
+
+def record_time_to_merged_verified(seconds: int, severity: str, upgrade_type: str):
+    """
+    Real MTTR: time from vulnerability detected to PR merged and verified.
+    This is the metric that replaces 'time to open a PR'.
+    """
+    statsd.gauge(
+        "shieldops.remediation.time_to_merged_verified_seconds",
+        seconds,
+        tags=[f"severity:{severity}", f"upgrade_type:{upgrade_type}"],
+    )
+
+
+def record_confidence(confidence: float, decision: str):
+    """Distribution of Devin's self-reported confidence per session."""
+    statsd.gauge(
+        "shieldops.remediation.confidence",
+        confidence,
+        tags=[f"decision:{decision}"],
+    )
+
+
+def record_acu_cost(acu_used: float, session_id: str, severity: str):
+    """Cost per session in ACU units — feeds cost-per-fix calculation."""
+    statsd.gauge(
+        "shieldops.devin.cost_acu",
+        acu_used,
+        tags=[f"session_id:{session_id}", f"severity:{severity}"],
+    )
+
+
+def record_reviewer_minutes_saved(minutes_saved: float, decision: str):
+    """
+    Estimated review time saved vs. manual remediation.
+    Baseline assumption: manual fix = 45 min for patch/minor, 120 min for major.
+    Auto-merge-ready saves the full baseline. Human-review saves 80%.
+    """
+    statsd.gauge(
+        "shieldops.remediation.reviewer_minutes_saved",
+        minutes_saved,
+        tags=[f"decision:{decision}"],
+    )
+    statsd.increment(
+        "shieldops.remediation.reviewer_minutes_saved_cumulative",
+        int(minutes_saved),
+        tags=[f"decision:{decision}"],
+    )
+
+
+def record_unreachable_vuln_deprioritized(count: int):
+    """Track how many CVEs were deprioritized because the code path is unreachable."""
+    statsd.gauge("shieldops.triage.unreachable_deprioritized", count)
+
+
+# ========== Datadog Event API (for lifecycle events) ==========
+
+class EventEmitter:
+    """Sends events to Datadog via HTTP API (events don't go through StatsD)."""
 
     def __init__(self, config: DatadogConfig):
         self.config = config
-        self.prefix = config.metric_prefix
-        self.base_url = f"https://api.{config.site}/api/v2"
+        self.base_url = f"https://api.{config.site}/api/v1"
         self.headers = {
             "DD-API-KEY": config.api_key,
             "Content-Type": "application/json",
         }
 
-    # === THE FLEET ===
-
-    async def emit_session_created(self, task: RemediationTask):
-        now = int(time.time())
-        tags = self._task_tags(task)
-        await self._submit([
-            self._count(f"{self.prefix}.devin.sessions.created", 1, now, tags),
-        ])
-
-    async def emit_session_completed(self, task: RemediationTask):
-        now = int(time.time())
-        tags = self._task_tags(task)
-        series = [self._count(f"{self.prefix}.devin.sessions.completed", 1, now, tags)]
-
-        if task.duration_seconds:
-            series.append(self._gauge(f"{self.prefix}.devin.session.duration_seconds",
-                                      task.duration_seconds, now, tags))
-        if task.interventions > 0:
-            series.append(self._count(f"{self.prefix}.devin.interventions", task.interventions, now, tags))
-
-        await self._submit(series)
-
-    async def emit_session_failed(self, task: RemediationTask):
-        now = int(time.time())
-        tags = self._task_tags(task)
-        await self._submit([
-            self._count(f"{self.prefix}.devin.sessions.failed", 1, now, tags),
-        ])
-
-    # === TRUST SPLIT (the VP's comfort metrics) ===
-
-    async def emit_policy_decision(self, task: RemediationTask, policy: PolicyResult):
-        """Emit the policy routing decision — auto-merge vs human vs blocked."""
-        now = int(time.time())
-        tags = self._task_tags(task) + [f"decision:{policy.decision.value}"]
-
-        series = [
-            self._count(f"{self.prefix}.policy.{policy.decision.value}", 1, now, tags),
-            self._gauge(f"{self.prefix}.remediation.confidence", policy.confidence, now, tags),
-        ]
-
-        # The hero metric: breaking changes handled
-        if policy.breaking_changes_detected and policy.decision != PolicyDecision.BLOCKED:
-            series.append(self._count(
-                f"{self.prefix}.remediation.breaking_changes_handled", 1, now, tags))
-
-        # Cost tracking (ACU approximation — Devin sessions use ACUs)
-        if task.duration_seconds:
-            # Rough ACU estimate: ~1 ACU per 10 min of session time
-            estimated_acu = task.duration_seconds / 600
-            series.append(self._gauge(f"{self.prefix}.devin.cost_acu", estimated_acu, now, tags))
-
-        await self._submit(series)
-
-    # === FLEET AGGREGATE STATS ===
-
-    async def emit_fleet_stats(self, stats: dict):
-        """Emit aggregate fleet statistics for the dashboard."""
-        now = int(time.time())
-        tags = ["pipeline:shieldops"]
-
-        series = [
-            # Fleet status
-            self._gauge(f"{self.prefix}.devin.sessions.active",
-                       stats["active_sessions"], now, tags),
-            self._gauge(f"{self.prefix}.remediation.success_rate",
-                       stats["success_rate"], now, tags),
-            self._gauge(f"{self.prefix}.devin.intervention_rate",
-                       stats["intervention_rate"], now, tags),
-            self._gauge(f"{self.prefix}.remediation.avg_confidence",
-                       stats["avg_confidence"], now, tags),
-
-            # Trust split totals
-            self._gauge(f"{self.prefix}.policy.auto_merge_ready.total",
-                       stats["auto_merge_ready"], now, tags),
-            self._gauge(f"{self.prefix}.policy.human_review.total",
-                       stats["human_review"], now, tags),
-            self._gauge(f"{self.prefix}.policy.blocked.total",
-                       stats["blocked"], now, tags),
-
-            # The hero number
-            self._gauge(f"{self.prefix}.remediation.breaking_changes_handled.total",
-                       stats["breaking_changes_handled"], now, tags),
-        ]
-
-        if stats["avg_duration_seconds"] > 0:
-            series.append(self._gauge(
-                f"{self.prefix}.remediation.time_to_merged_verified_seconds",
-                stats["avg_duration_seconds"], now, tags))
-
-        await self._submit(series)
-
-    # === VULNERABILITY POSTURE (demoted to supporting cast) ===
-
-    async def emit_scan_metrics(self, scan_result: ScanResult):
-        now = int(time.time())
-        tags = [f"scanner:{scan_result.scanner}"]
-        series = [
-            self._gauge(f"{self.prefix}.scan.vulnerabilities_found",
-                       len(scan_result.vulnerabilities), now, tags),
-        ]
-        if scan_result.duration_seconds:
-            series.append(self._gauge(f"{self.prefix}.scan.duration_seconds",
-                                      scan_result.duration_seconds, now, tags))
-        for severity, count in scan_result.by_severity.items():
-            series.append(self._gauge(f"{self.prefix}.vulnerabilities.by_severity",
-                                      count, now, tags + [f"severity:{severity}"]))
-        await self._submit(series)
-
-    async def emit_vulnerability_gauge(self, open_count: int, fixed_count: int,
-                                        unreachable_count: int = 0):
-        now = int(time.time())
-        tags = ["pipeline:shieldops"]
-        series = [
-            self._gauge(f"{self.prefix}.vulnerabilities.open", open_count, now, tags),
-            self._gauge(f"{self.prefix}.vulnerabilities.fixed", fixed_count, now, tags),
-            self._gauge(f"{self.prefix}.vulnerabilities.unreachable_deprioritized",
-                       unreachable_count, now, tags),
-        ]
-        await self._submit(series)
-
-    # === Helpers ===
-
-    def _task_tags(self, task: RemediationTask) -> list[str]:
-        return [
-            f"severity:{task.vuln.severity.value}",
-            f"type:{task.vuln.vuln_type.value}",
-            f"package:{task.vuln.package_name}",
-            f"complexity:{task.decision.estimated_complexity}",
-            f"predicted_route:{task.decision.predicted_route}",
-        ]
-
-    def _gauge(self, metric: str, value: float, timestamp: int, tags: list[str]) -> dict:
-        return {"metric": metric, "type": 3, "points": [{"timestamp": timestamp, "value": value}], "tags": tags}
-
-    def _count(self, metric: str, value: float, timestamp: int, tags: list[str]) -> dict:
-        return {"metric": metric, "type": 1, "points": [{"timestamp": timestamp, "value": value}], "tags": tags}
-
-    async def _submit(self, series: list[dict]):
+    async def send_event(self, title: str, text: str, alert_type: str = "info",
+                         tags: Optional[list[str]] = None):
         if not self.config.api_key:
-            logger.debug("No DD API key — skipping metric submission")
+            logger.debug(f"No DD API key — event: {title}")
             return
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.post(f"{self.base_url}/series", headers=self.headers, json={"series": series})
-                if resp.status_code not in (200, 202):
-                    logger.warning(f"Datadog metrics returned {resp.status_code}")
+                resp = await client.post(
+                    f"{self.base_url}/events", headers=self.headers,
+                    json={"title": title, "text": text, "alert_type": alert_type,
+                          "source_type_name": "shieldops", "tags": tags or []})
+                if resp.status_code in (200, 202):
+                    logger.debug(f"Event sent: {title}")
         except Exception as e:
-            logger.error(f"Failed to submit metrics: {e}")
+            logger.error(f"Failed to send event: {e}")

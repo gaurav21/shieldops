@@ -14,6 +14,34 @@ The difference between "version bump" and "the thing Dependabot can't do" is in 
 from ..scanner.models import Vulnerability, VulnerabilityType
 
 
+# Schema passed to the Devin API structured_output_schema parameter
+STRUCTURED_OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "status": {
+            "type": "string",
+            "enum": ["success", "partial", "failed"],
+        },
+        "pr_url": {"type": "string"},
+        "changes_summary": {"type": "string"},
+        "tests_passed": {"type": "boolean"},
+        "breaking_changes_detected": {"type": "boolean"},
+        "breaking_changes_notes": {"type": "string"},
+        "reachability_assessment": {"type": "string"},
+        "confidence": {"type": "number"},
+        "files_touched": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "notes": {"type": "string"},
+    },
+    "required": [
+        "status", "tests_passed", "breaking_changes_detected",
+        "confidence", "files_touched",
+    ],
+}
+
+
 # The structured output instruction appended to every prompt
 STRUCTURED_OUTPUT_INSTRUCTION = """
 **IMPORTANT — Structured Output Required:**

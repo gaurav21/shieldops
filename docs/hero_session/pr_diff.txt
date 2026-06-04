@@ -1,0 +1,2 @@
+# Placeholder — replace with actual PR diff from hero Devin session
+# Run: gh pr diff <PR_NUMBER> --repo gaurav21/superset > docs/hero_session/pr_diff.txt
