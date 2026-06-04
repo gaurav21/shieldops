@@ -11,6 +11,7 @@ from typing import Optional
 import httpx
 
 from ..config import DatadogConfig
+from .datadog_base import DatadogBaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -90,49 +91,43 @@ DASHBOARD_CONFIG = {
 }
 
 
-class DashboardBuilder:
+class DashboardBuilder(DatadogBaseClient):
     """Creates and manages the ShieldOps Datadog dashboard."""
 
     def __init__(self, config: DatadogConfig):
-        self.config = config
-        self.base_url = f"https://api.{config.site}/api/v1"
-        self.headers = {
-            "DD-API-KEY": config.api_key,
-            "DD-APPLICATION-KEY": config.app_key,
-            "Content-Type": "application/json",
-        }
+        super().__init__(config, api_version="v1", needs_app_key=True)
 
     async def create_or_update(self) -> Optional[str]:
-        if not self.config.api_key or not self.config.app_key:
+        if not self.has_keys(need_app_key=True):
             logger.warning("No DD keys — skipping dashboard creation")
             return None
 
         existing_id = await self._find_existing()
-        async with httpx.AsyncClient(timeout=30) as client:
-            try:
-                if existing_id:
-                    resp = await client.put(f"{self.base_url}/dashboard/{existing_id}",
-                                           headers=self.headers, json=DASHBOARD_CONFIG)
-                else:
-                    resp = await client.post(f"{self.base_url}/dashboard",
-                                            headers=self.headers, json=DASHBOARD_CONFIG)
+        try:
+            if existing_id:
+                resp = await self._put(f"dashboard/{existing_id}",
+                                       json=DASHBOARD_CONFIG, timeout=30)
+            else:
+                resp = await self._post("dashboard",
+                                        json=DASHBOARD_CONFIG, timeout=30)
+            if resp:
                 resp.raise_for_status()
                 data = resp.json()
                 url = data.get("url", f"https://app.datadoghq.com/dashboard/{data.get('id')}")
                 logger.info(f"Dashboard {'updated' if existing_id else 'created'}: {url}")
                 return url
-            except httpx.HTTPError as e:
-                logger.error(f"Dashboard creation failed: {e}")
-                return None
+        except httpx.HTTPError as e:
+            logger.error(f"Dashboard creation failed: {e}")
+        return None
 
     async def _find_existing(self) -> Optional[str]:
-        async with httpx.AsyncClient(timeout=15) as client:
-            try:
-                resp = await client.get(f"{self.base_url}/dashboard", headers=self.headers)
+        try:
+            resp = await self._get("dashboard")
+            if resp:
                 resp.raise_for_status()
                 for dash in resp.json().get("dashboards", []):
                     if "ShieldOps" in dash.get("title", ""):
                         return dash["id"]
-            except httpx.HTTPError:
-                pass
+        except httpx.HTTPError:
+            pass
         return None

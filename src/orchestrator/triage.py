@@ -43,9 +43,6 @@ class TriageEngine:
     MODERATE_TYPES = {VulnerabilityType.CONTAINER}
     COMPLEX_TYPES = {VulnerabilityType.SAST, VulnerabilityType.CODE_QUALITY}
 
-    # Sensitive paths that always force human review
-    SENSITIVE_PATHS = {"superset/sql_lab.py", "superset/views/", "superset/security/",
-                       "superset/connectors/", "superset/utils/encrypt.py"}
 
     def __init__(self, repo_path: Optional[str] = None):
         self.repo_path = repo_path or os.getenv("REPO_PATH", "/tmp/superset")

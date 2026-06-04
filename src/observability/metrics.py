@@ -13,6 +13,7 @@ from datadog import statsd
 import httpx
 
 from ..config import DatadogConfig
+from .datadog_base import DatadogBaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -131,29 +132,15 @@ def record_unreachable_vuln_deprioritized(count: int):
 
 # ========== Datadog Event API (for lifecycle events) ==========
 
-class EventEmitter:
+class EventEmitter(DatadogBaseClient):
     """Sends events to Datadog via HTTP API (events don't go through StatsD)."""
 
     def __init__(self, config: DatadogConfig):
-        self.config = config
-        self.base_url = f"https://api.{config.site}/api/v1"
-        self.headers = {
-            "DD-API-KEY": config.api_key,
-            "Content-Type": "application/json",
-        }
+        super().__init__(config, api_version="v1")
 
-    async def send_event(self, title: str, text: str, alert_type: str = "info",
-                         tags: Optional[list[str]] = None):
+    async def send(self, title: str, text: str, alert_type: str = "info",
+                   tags: Optional[list[str]] = None):
         if not self.config.api_key:
             logger.debug(f"No DD API key — event: {title}")
             return
-        try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.post(
-                    f"{self.base_url}/events", headers=self.headers,
-                    json={"title": title, "text": text, "alert_type": alert_type,
-                          "source_type_name": "shieldops", "tags": tags or []})
-                if resp.status_code in (200, 202):
-                    logger.debug(f"Event sent: {title}")
-        except Exception as e:
-            logger.error(f"Failed to send event: {e}")
+        await self.send_event(title, text, alert_type=alert_type, tags=tags)
