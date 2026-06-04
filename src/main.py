@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, BackgroundTasks, Security
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
@@ -414,12 +414,19 @@ app.include_router(webhook_router)
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-async def _require_api_key(api_key: Optional[str] = Security(_api_key_header)) -> Optional[str]:
-    """Optional API key auth — enforced only if SHIELDOPS_API_KEY is set."""
-    required = os.getenv("SHIELDOPS_API_KEY", "")
-    if required and api_key != required:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Invalid API key")
+async def _require_api_key(
+    api_key: Optional[str] = Security(_api_key_header),
+) -> str:
+    """Dependency that enforces API-key auth on sensitive endpoints.
+
+    If SHIELDOPS_API_KEY is not set the check is skipped so that local
+    development still works out of the box.
+    """
+    expected = os.getenv("SHIELDOPS_API_KEY", "")
+    if not expected:
+        return ""  # no key configured — allow (dev mode)
+    if not api_key or api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return api_key
 
 
@@ -440,6 +447,7 @@ async def health():
 
 @app.get("/status", dependencies=[Security(_require_api_key)])
 async def status():
+    """The VP endpoint — full fleet + trust + posture status."""
     o: ShieldOpsOrchestrator = app.state.orchestrator
     stats = o.session_manager.get_stats()
     vulns = [{"id": v.id, "title": v.title, "severity": v.severity.value,

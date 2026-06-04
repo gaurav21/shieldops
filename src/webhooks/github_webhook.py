@@ -27,9 +27,16 @@ def configure(orchestrator, webhook_secret: str):
 
 
 def _verify_signature(payload: bytes, signature: str, secret: str) -> bool:
-    """Verify GitHub webhook signature."""
+    """Verify GitHub webhook signature.
+
+    Returns ``False`` when no secret is configured — callers must treat an
+    absent secret as an error rather than silently allowing unsigned payloads.
+    """
     if not secret:
-        return True  # Skip verification if no secret configured
+        return False
+
+    if not signature:
+        return False
 
     expected = "sha256=" + hmac.new(
         secret.encode(), payload, hashlib.sha256
@@ -45,11 +52,11 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
     1. An issue is labeled with 'devin-auto-fix'
     2. An issue is created with the 'security' label
     """
-    # Verify signature
+    # Verify signature — reject when no secret is configured or signature is invalid
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256", "")
-    if _webhook_secret and not _verify_signature(body, signature, _webhook_secret):
-        raise HTTPException(status_code=403, detail="Invalid signature")
+    if not _verify_signature(body, signature, _webhook_secret or ""):
+        raise HTTPException(status_code=403, detail="Invalid or missing webhook signature")
 
     event_type = request.headers.get("X-GitHub-Event", "")
     payload = json.loads(body)

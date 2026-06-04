@@ -25,6 +25,12 @@ COPY scripts/ ./scripts/
 # Create directory for repo cloning
 RUN mkdir -p /tmp/superset
 
+# Run as non-root user
+RUN groupadd --gid 1000 shieldops && \
+    useradd --uid 1000 --gid shieldops --create-home shieldops && \
+    chown -R shieldops:shieldops /app /tmp/superset
+USER shieldops
+
 EXPOSE 8000
 
 # Health check
