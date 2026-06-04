@@ -6,11 +6,9 @@ V2: Fleet health, trust split, cost, breaking-change metrics alongside V1 vulner
 """
 
 import logging
-import time
 from typing import Optional
 
 from datadog import statsd
-import httpx
 
 from ..config import DatadogConfig
 from .datadog_base import DatadogBaseClient

@@ -6,7 +6,6 @@ V1 monitors kept, V2 trust monitors added.
 """
 
 import logging
-from typing import Optional
 
 import httpx
 
