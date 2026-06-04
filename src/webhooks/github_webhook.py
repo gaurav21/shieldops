@@ -119,5 +119,5 @@ async def _handle_issue_remediation(
             issue_body=issue_body,
             labels=labels,
         )
-    except Exception as e:
-        logger.error(f"Failed to remediate issue #{issue_number}: {e}")
+    except Exception:
+        logger.exception(f"Failed to remediate issue #{issue_number}")

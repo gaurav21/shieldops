@@ -102,9 +102,12 @@ class SessionManager:
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         completed = []
-        for r in results:
+        for decision, r in zip(actionable, results):
             if isinstance(r, Exception):
-                logger.error(f"Remediation task failed: {r}")
+                logger.error(
+                    f"Remediation task failed for {decision.vulnerability.package_name} "
+                    f"({type(r).__name__}): {r}"
+                )
             elif r:
                 completed.append(r)
         return completed
@@ -180,6 +183,8 @@ class SessionManager:
         """Poll a Devin session until completion or timeout."""
         session_id = task.devin_session.session_id
         start = datetime.utcnow()
+        consecutive_errors = 0
+        max_consecutive_errors = 5
 
         while True:
             elapsed = (datetime.utcnow() - start).total_seconds()
@@ -195,6 +200,7 @@ class SessionManager:
             try:
                 session = await self.devin.get_session(session_id)
                 task.devin_session = session
+                consecutive_errors = 0
 
                 if session.status in ("running", "blocked"):
                     if session.status == "blocked":
@@ -221,8 +227,20 @@ class SessionManager:
                 return
 
             except Exception as e:
-                logger.warning(f"Poll error for {session_id}: {e}")
-                continue
+                consecutive_errors += 1
+                logger.warning(
+                    f"Poll error for {session_id} "
+                    f"({consecutive_errors}/{max_consecutive_errors}): {e}"
+                )
+                if consecutive_errors >= max_consecutive_errors:
+                    task.error = (
+                        f"Polling abandoned after {max_consecutive_errors} "
+                        f"consecutive errors, last: {e}"
+                    )
+                    task.vuln.status = RemediationStatus.FAILED
+                    task.completed_at = datetime.utcnow()
+                    await self._notify(task, "session_failed")
+                    return
 
     async def send_intervention(self, session_id: str, message: str) -> bool:
         """Send a follow-up message to a Devin session (counts as intervention)."""

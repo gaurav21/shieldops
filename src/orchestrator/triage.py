@@ -179,7 +179,11 @@ class TriageEngine:
                 )
                 return len(result.stdout.strip()) > 0
 
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+        except subprocess.TimeoutExpired:
+            logger.warning(f"Reachability check timed out for {vuln.package_name}")
+            return None
+        except FileNotFoundError:
+            logger.warning("grep not available for reachability check")
             return None
 
         return None

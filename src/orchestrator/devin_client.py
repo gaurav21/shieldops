@@ -149,5 +149,6 @@ class DevinClient:
                     params={"limit": 1},
                 )
                 return resp.status_code == 200
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Devin API health check failed: {e}")
             return False
