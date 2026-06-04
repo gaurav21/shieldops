@@ -454,6 +454,13 @@ a{color:var(--gold);text-decoration:none}
   var navhint=document.getElementById('navhint');
   var animating=false;
 
+  function resetSlide(s){
+    s.classList.remove('active','exit-up','exit-down');
+    s.style.transform='';
+    s.style.opacity='';
+    s.style.pointerEvents='';
+  }
+
   function go(n){
     if(animating||n<0||n>=total||n===current)return;
     animating=true;
@@ -461,29 +468,35 @@ a{color:var(--gold);text-decoration:none}
     var old=slides[current];
     var next=slides[n];
 
-    // Exit old
+    // 1. Start exit of old slide
     old.classList.remove('active');
-    old.classList.add(dir>0?'exit-up':'');
-    old.style.transform=dir>0?'translateY(-40px)':'translateY(40px)';
+    old.style.pointerEvents='none';
     old.style.opacity='0';
+    old.style.transform=dir>0?'translateY(-40px)':'translateY(40px)';
 
-    // Enter new
+    // 2. Prepare new slide off-screen, then animate in
+    next.style.transition='none';
     next.style.transform=dir>0?'translateY(40px)':'translateY(-40px)';
     next.style.opacity='0';
     next.offsetHeight; // force reflow
+    next.style.transition='';
     next.classList.add('active');
-    next.style.transform='';
-    next.style.opacity='';
+    next.style.transform='translateY(0)';
+    next.style.opacity='1';
+    next.style.pointerEvents='auto';
 
     current=n;
     updateUI();
 
     setTimeout(function(){
-      old.classList.remove('exit-up');
-      old.style.transform='';
-      old.style.opacity='';
+      // Clean up old slide completely
+      resetSlide(old);
+      // Clean up inline styles on new slide (let CSS class handle it)
+      next.style.transform='';
+      next.style.opacity='';
+      next.style.pointerEvents='';
       animating=false;
-    },600);
+    },650);
   }
 
   function updateUI(){
