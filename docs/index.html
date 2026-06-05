@@ -350,12 +350,12 @@ a{color:var(--gold);text-decoration:none}
   <p style="color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:8px">"Is this thing safe to run?"</p>
   <div class="g4" style="margin-top:32px">
     <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">Sessions Launched</div></div>
-    <div class="dash-card"><div class="dash-val">2</div><div class="dash-label">PRs Delivered</div></div>
-    <div class="dash-card"><div class="dash-val">1</div><div class="dash-label">Hero In Progress</div></div>
+    <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">PRs Delivered</div></div>
+    <div class="dash-card" style="border-color:var(--gold);border-width:2px"><div class="dash-val">✅</div><div class="dash-label">Hero PR Shipped</div></div>
     <div class="dash-card"><div class="dash-val">7</div><div class="dash-label">Issues Created</div></div>
     <div class="dash-card"><div class="dash-val">1</div><div class="dash-label">Breaking Change (paramiko)</div></div>
     <div class="dash-card"><div class="dash-val">0%</div><div class="dash-label">Intervention Rate</div></div>
-    <div class="dash-card"><div class="dash-val">5</div><div class="dash-label">Files Changed</div></div>
+    <div class="dash-card"><div class="dash-val">9</div><div class="dash-label">Files Changed</div></div>
     <div class="dash-card"><div class="dash-val">&lt;8m</div><div class="dash-label">Time to First PR</div></div>
   </div>
 </div>
@@ -388,43 +388,81 @@ a{color:var(--gold);text-decoration:none}
 <div class="inner">
   <p class="label">Real Results</p>
   <h2 class="title">Devin shipped these PRs on <span class="gold">Apache Superset</span></h2>
-  <div class="g2" style="margin-top:28px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:28px">
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <span style="font-size:1.4rem">🐳</span>
         <h3 style="margin:0">PR #8 — Dockerfile Hardening</h3>
       </div>
-      <p style="font-size:.82rem;color:var(--text-2);line-height:1.7">
+      <p style="font-size:.78rem;color:var(--text-2);line-height:1.7">
         <strong>Pinned base images to SHA256 digests</strong> for tamper-resistant builds.<br>
-        Purged dev packages (<code>libsasl2-dev</code>, <code>libpq-dev</code>, etc.) after build.<br>
-        Added explicit HEALTHCHECK params (<code>--interval=30s --timeout=10s</code>).<br>
-        Verified: <code>docker build</code> succeeds, <code>docker inspect</code> confirms non-root user.
+        Purged dev packages after build. Added HEALTHCHECK params.
       </p>
-      <p style="font-size:.75rem;margin-top:10px">
-        <a href="https://github.com/gaurav21/superset/pull/8" target="_blank">github.com/gaurav21/superset/pull/8</a>
-        <span style="color:var(--gold);margin-left:8px">+20 −4</span>
-      </p>
+      <a href="https://github.com/gaurav21/superset/pull/8" target="_blank">
+        <img src="screenshots/pr8-dockerfile.png" alt="PR #8" style="width:100%;border-radius:8px;margin-top:8px;border:1px solid var(--border);cursor:pointer">
+      </a>
+      <p style="font-size:.72rem;margin-top:6px;color:var(--gold)">+20 −4 · 1 file</p>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <span style="font-size:1.4rem">🔐</span>
-        <h3 style="margin:0">PR #9 — Paramiko CVE-2026-44405</h3>
+        <h3 style="margin:0">PR #9 — Paramiko CVE</h3>
       </div>
-      <p style="font-size:.82rem;color:var(--text-2);line-height:1.7">
-        <strong>Upgraded paramiko 3.5.1 → 5.0.0</strong> to remove SHA-1 RSA operations.<br>
-        Identified breaking changes (GSSAPI removed, min DH modulus raised).<br>
-        Verified: Superset's <code>RSAKey.from_private_key()</code> API unchanged in 5.0.0.<br>
-        Updated <code>requirements/</code>, <code>pyproject.toml</code>, and license config.
+      <p style="font-size:.78rem;color:var(--text-2);line-height:1.7">
+        <strong>Upgraded paramiko 3.5.1 → 5.0.0</strong> — SHA-1 removal, breaking changes handled.
       </p>
-      <p style="font-size:.75rem;margin-top:10px">
-        <a href="https://github.com/gaurav21/superset/pull/9" target="_blank">github.com/gaurav21/superset/pull/9</a>
-        <span style="color:var(--gold);margin-left:8px">+8 −4</span>
+      <a href="https://github.com/gaurav21/superset/pull/9" target="_blank">
+        <img src="screenshots/pr9-paramiko.png" alt="PR #9" style="width:100%;border-radius:8px;margin-top:8px;border:1px solid var(--border);cursor:pointer">
+      </a>
+      <p style="font-size:.72rem;margin-top:6px;color:var(--gold)">+8 −4 · 3 files</p>
+    </div>
+    <div class="card" style="border-color:var(--gold);border-width:2px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:1.4rem">🏆</span>
+        <h3 style="margin:0">PR #10 — Flask 2→3 Hero</h3>
+      </div>
+      <p style="font-size:.78rem;color:var(--text-2);line-height:1.7">
+        <strong>Flask 2.3.3 → 3.1.0</strong> — major version upgrade. Fixed breaking imports across 5 files in a 500K LOC codebase.
       </p>
+      <a href="https://github.com/gaurav21/superset/pull/10" target="_blank">
+        <img src="screenshots/pr10-flask-upgrade.png" alt="PR #10" style="width:100%;border-radius:8px;margin-top:8px;border:1px solid var(--border);cursor:pointer">
+      </a>
+      <p style="font-size:.72rem;margin-top:6px;color:var(--gold)">+11 −12 · 5 files · ⚡ The hero moment</p>
     </div>
   </div>
-  <p style="text-align:center;margin-top:24px;font-size:.85rem;color:var(--text-2)">
-    🏃 <strong>Flask 2.3 → 3.x hero session</strong> — in progress (breaking-change upgrade on 500K LOC codebase)
-  </p>
+</div>
+</div>
+
+<!-- SLIDE 10b: FLASK HERO DEEP DIVE -->
+<div class="slide" data-bg="light">
+<div class="inner center">
+  <p class="label">The Hero Moment — Proof</p>
+  <h2 class="title">Flask 2.3.3 → 3.x: the diff that <span class="gold">Dependabot can't ship</span></h2>
+  <div class="g2" style="margin-top:28px">
+    <div class="card">
+      <a href="https://github.com/gaurav21/superset/pull/10/files" target="_blank">
+        <img src="screenshots/pr10-flask-diff-code.png" alt="Flask PR diff" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:pointer">
+      </a>
+      <p style="font-size:.78rem;color:var(--text-2);margin-top:12px">
+        <code>flask&gt;=2.2.5, &lt;4.0.0</code> → <code>flask&gt;=3.1.0, &lt;4.0.0</code><br>
+        Updated across <strong>pyproject.toml</strong>, <strong>requirements/base.txt</strong>, <strong>requirements/development.txt</strong>, integration tests, and security dashboard tests.
+      </p>
+    </div>
+    <div class="card">
+      <h3>What Devin did</h3>
+      <ul style="font-size:.82rem;color:var(--text-2);line-height:2;list-style:none;padding:0">
+        <li>✅ Read Flask 3.x CHANGELOG and migration guide</li>
+        <li>✅ Found all version constraints across 5 files</li>
+        <li>✅ Updated <code>pyproject.toml</code> dependency spec</li>
+        <li>✅ Updated <code>requirements/base.txt</code> pin</li>
+        <li>✅ Updated <code>requirements/development.txt</code></li>
+        <li>✅ Fixed integration test imports</li>
+        <li>✅ Fixed security dataset test compatibility</li>
+        <li>✅ Verified no breaking API call sites</li>
+      </ul>
+      <p class="callout" style="font-size:.82rem;margin-top:16px">Dependabot would have bumped the version, watched the build fail, and walked away.</p>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -480,7 +518,7 @@ a{color:var(--gold);text-decoration:none}
     <a href="https://github.com/gaurav21/superset" target="_blank" class="card gh-card center">
       <div style="font-size:2rem;margin-bottom:8px">🍴</div>
       <h3>Superset Fork</h3>
-      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset — 7 issues, 2+ Devin PRs</p>
+      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset — 7 issues, 3 Devin PRs</p>
     </a>
   </div>
   <p style="margin-top:48px;font-size:.85rem;color:var(--text-2)">Built by <strong>Gaurav Sharma</strong> · Devin AI + Datadog</p>
