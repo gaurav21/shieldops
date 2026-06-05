@@ -55,6 +55,11 @@ class Config:
     scanner: ScannerConfig = field(default_factory=ScannerConfig)
     port: int = 8000
     log_level: str = "INFO"
+    # Event-driven trigger config
+    trigger_label: str = "shieldops"
+    poll_interval_seconds: int = 15
+    session_timeout_seconds: int = 3600
+    skip_signature_check: bool = False
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -82,4 +87,8 @@ class Config:
             ),
             port=int(os.getenv("SHIELDOPS_PORT", "8000")),
             log_level=os.getenv("SHIELDOPS_LOG_LEVEL", "INFO"),
+            trigger_label=os.getenv("TRIGGER_LABEL", "shieldops"),
+            poll_interval_seconds=int(os.getenv("POLL_INTERVAL_SECONDS", "15")),
+            session_timeout_seconds=int(os.getenv("SESSION_TIMEOUT_SECONDS", "3600")),
+            skip_signature_check=os.getenv("SKIP_SIGNATURE_CHECK", "0") == "1",
         )

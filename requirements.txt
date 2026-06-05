@@ -3,9 +3,5 @@ uvicorn[standard]==0.34.3
 httpx==0.28.1
 pydantic==2.11.4
 python-dotenv==1.1.0
-datadog-api-client==2.31.0
 datadog==0.50.1
 PyGithub==2.5.0
-APScheduler==3.10.4
-pip-audit==2.7.3
-semgrep==1.73.0
