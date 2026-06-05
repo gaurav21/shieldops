@@ -541,6 +541,18 @@ async def lifespan(app: FastAPI):
     logger.info(f"🛡️ ShieldOps trigger started — label={TRIGGER_LABEL}, "
                 f"max_sessions={MAX_CONCURRENT_SESSIONS}, "
                 f"poll_interval={POLL_INTERVAL_SECONDS}s")
+
+    # Resume polling for sessions that were active when we last shut down
+    running = state.get_running_sessions()
+    if running:
+        logger.info(f"🔄 Resuming {len(running)} active session(s) from persisted state")
+        for issue_key, session_data in running.items():
+            sid = session_data.get("session_id")
+            triage = session_data.get("triage", {})
+            if sid:
+                asyncio.create_task(_poll_session(issue_key, sid, triage))
+                logger.info(f"  → Resumed polling for {issue_key} (session {sid})")
+
     yield
     logger.info("🛡️ ShieldOps trigger shutting down")
 

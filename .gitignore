@@ -7,6 +7,9 @@ dist/
 build/
 .pytest_cache/
 
+# Persisted state
+data/
+
 # Strategy/internal docs - keep local
 BRAINSTORM-EXPORT.md
 MASTER-PLAN.md
