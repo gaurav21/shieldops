@@ -34,7 +34,12 @@ class DevinClient:
             "Authorization": f"Bearer {config.api_key}",
             "Content-Type": "application/json",
         }
-        self.base_url = config.base_url.rstrip("/")
+        # v3 API uses org-scoped URLs
+        base = config.base_url.rstrip("/")
+        if config.org_id and "/v3/" not in base:
+            self.base_url = f"https://api.devin.ai/v3/organizations/{config.org_id}"
+        else:
+            self.base_url = base
 
     async def create_session(
         self,
@@ -82,7 +87,7 @@ class DevinClient:
         """Get current status of a Devin session."""
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
-                f"{self.base_url}/session/{session_id}",
+                f"{self.base_url}/sessions/{session_id}",
                 headers=self.headers,
             )
             resp.raise_for_status()
@@ -102,7 +107,7 @@ class DevinClient:
         async with httpx.AsyncClient(timeout=15) as client:
             try:
                 resp = await client.post(
-                    f"{self.base_url}/session/{session_id}/message",
+                    f"{self.base_url}/sessions/{session_id}/message",
                     headers=self.headers,
                     json={"message": message},
                 )
@@ -129,7 +134,7 @@ class DevinClient:
             data = resp.json()
 
             sessions = []
-            for s in data.get("sessions", []):
+            for s in data.get("items", data.get("sessions", [])):
                 sessions.append(DevinSession(
                     session_id=s["session_id"],
                     url=s.get("url", ""),
