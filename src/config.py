@@ -67,7 +67,7 @@ class Config:
             ),
             github=GitHubConfig(
                 token=os.getenv("GITHUB_TOKEN", ""),
-                repo_owner=os.getenv("GITHUB_REPO_OWNER", "gsharma21"),
+                repo_owner=os.getenv("GITHUB_REPO_OWNER", "gaurav21"),
                 repo_name=os.getenv("GITHUB_REPO_NAME", "superset"),
                 webhook_secret=os.getenv("GITHUB_WEBHOOK_SECRET", ""),
             ),

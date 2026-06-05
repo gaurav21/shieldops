@@ -6,3 +6,9 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+
+# Strategy/internal docs - keep local
+BRAINSTORM-EXPORT.md
+MASTER-PLAN.md
+V2-BUILD-SPEC.md
+.local-only/

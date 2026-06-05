@@ -680,8 +680,8 @@ The script must:
 
 1. **Fix the clone URL** in the Quick Start section. Change:
    ```
-   git clone https://github.com/gsharma21/devin-devsecsops.git
-   cd devin-devsecsops
+   git clone https://github.com/gaurav21/shieldops.git
+   cd shieldops
    ```
    To:
    ```
@@ -715,7 +715,7 @@ The script must:
 
 5. **Replace the dead Loom link** `[Watch the 5-minute Loom walkthrough →](#)` with `[Watch the 5-minute Loom walkthrough →](docs/DEMO.md)` and create an empty `docs/DEMO.md` with placeholder text `# Demo — coming soon`.
 
-**Done when:** `grep "gsharma21" README.md` returns nothing and `grep "trust control plane" README.md` returns a match.
+**Done when:** `grep "trust control plane" README.md` returns a match and all links use `gaurav21/shieldops`.
 
 ---
 
