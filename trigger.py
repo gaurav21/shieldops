@@ -264,6 +264,21 @@ async def _poll_session(issue_key: str, session_id: str, triage_result: dict):
         try:
             session = await _devin_client.get_session(session_id)
             detail = session.status_detail or ""
+
+            # Update pr_url and session_url mid-session (Devin opens PRs while running)
+            updates = {}
+            if session.pull_request_url:
+                updates["pr_url"] = session.pull_request_url
+            if session.url:
+                updates["session_url"] = session.url
+            if session.structured_output:
+                updates["structured_output"] = session.structured_output
+                conf = session.structured_output.get("confidence")
+                if conf is not None:
+                    updates["confidence"] = conf
+            if updates:
+                state.update_session(issue_key, **updates)
+
             state.record_event(
                 issue_key, "poll",
                 f"status={session.status}, status_detail={detail}, "
