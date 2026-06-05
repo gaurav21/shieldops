@@ -11,6 +11,7 @@
   --navy: #0E1A40;
   --navy-light: #162050;
   --navy-card: #1A2654;
+  --navy-deep: #0B1530;
   --gold: #C9A227;
   --gold-dim: #8B7118;
   --green: #2ECC71;
@@ -53,6 +54,17 @@ header h1 {
 
 header h1 span { color: var(--gold); }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.last-updated {
+  font-size: .75rem;
+  color: var(--muted);
+}
+
 .conn-badge {
   display: flex;
   align-items: center;
@@ -73,7 +85,7 @@ header h1 span { color: var(--gold); }
 /* ── Metric Cards ───────────────────────── */
 .metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
   padding: 20px 28px;
 }
@@ -84,21 +96,26 @@ header h1 span { color: var(--gold); }
   border-radius: 12px;
   padding: 20px;
   text-align: center;
-  transition: border-color .2s;
+  transition: border-color .2s, transform .2s;
 }
 
-.card:hover { border-color: var(--gold); }
-.card .value { font-family: var(--font-head); font-size: 2.4rem; font-weight: 700; }
+.card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.card .value { font-family: var(--font-head); font-size: 2.4rem; font-weight: 700; transition: all .3s; }
 .card .label { color: var(--muted); font-size: .82rem; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
 .card.active .value { color: var(--blue); }
 .card.completed .value { color: var(--green); }
 .card.blocked .value { color: var(--red); }
 .card.prs .value { color: var(--gold); }
+.card.human .value { color: var(--orange); }
+
+/* value change flash */
+.card .value.flash { animation: valuePulse .6s ease; }
+@keyframes valuePulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
 /* ── Main Layout ────────────────────────── */
 .main {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 300px 1fr;
   gap: 20px;
   padding: 0 28px 20px;
 }
@@ -116,6 +133,9 @@ header h1 span { color: var(--gold); }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-self: start;
+  position: sticky;
+  top: 20px;
 }
 
 .panel h2 {
@@ -129,7 +149,7 @@ header h1 span { color: var(--gold); }
 .panel button {
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: .88rem;
+  font-size: .85rem;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -147,11 +167,11 @@ header h1 span { color: var(--gold); }
 
 .severity-tag {
   display: inline-block;
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
-  margin-left: 6px;
+  margin-left: 4px;
   vertical-align: middle;
 }
 
@@ -197,7 +217,6 @@ header h1 span { color: var(--gold); }
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  flex: 1;
 }
 
 .table-wrap h2 {
@@ -213,40 +232,78 @@ header h1 span { color: var(--gold); }
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: .84rem;
+  font-size: .82rem;
 }
 
 th {
   text-align: left;
-  padding: 8px 14px;
+  padding: 8px 12px;
   color: var(--muted);
   font-weight: 500;
   border-bottom: 1px solid var(--border);
-  font-size: .78rem;
+  font-size: .76rem;
   text-transform: uppercase;
   letter-spacing: .5px;
   white-space: nowrap;
 }
 
 td {
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(42,58,106,.4);
   white-space: nowrap;
 }
 
-tr:hover td { background: rgba(201,162,39,.04); }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: rgba(201,162,39,.06); }
+tr.selected td { background: rgba(201,162,39,.1); }
 
 .status-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: .78rem;
+  font-size: .76rem;
   font-weight: 600;
 }
 
 .status-running { background: rgba(52,152,219,.2); color: var(--blue); }
 .status-completed { background: rgba(46,204,113,.2); color: var(--green); }
 .status-failed, .status-blocked { background: rgba(231,76,60,.2); color: var(--red); }
+
+/* Policy decision badges */
+.policy-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: .76rem;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+
+.policy-auto_merge_ready { background: rgba(46,204,113,.15); color: var(--green); border: 1px solid rgba(46,204,113,.3); }
+.policy-human_review { background: rgba(243,156,18,.15); color: var(--orange); border: 1px solid rgba(243,156,18,.3); }
+.policy-blocked { background: rgba(231,76,60,.15); color: var(--red); border: 1px solid rgba(231,76,60,.3); }
+.policy-pending { background: rgba(136,153,187,.1); color: var(--muted); border: 1px solid rgba(136,153,187,.2); }
+
+/* Confidence bar */
+.confidence-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confidence-track {
+  width: 50px;
+  height: 6px;
+  background: var(--navy);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .3s;
+}
 
 a { color: var(--gold); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -257,6 +314,142 @@ a:hover { text-decoration: underline; }
   color: var(--muted);
   font-size: .9rem;
 }
+
+/* ── Session Detail Panel ───────────────── */
+.detail-panel {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: none;
+  overflow: hidden;
+  animation: slideDown .3s ease-out;
+}
+
+.detail-panel.show { display: block; }
+
+@keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 1000px; } }
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-header h2 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.detail-close {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 1.1rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.detail-close:hover { border-color: var(--gold); color: var(--white); }
+
+.detail-body {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .detail-body { grid-template-columns: 1fr; }
+}
+
+.detail-section h3 {
+  font-family: var(--font-head);
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.detail-section .kv {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: .82rem;
+  border-bottom: 1px solid rgba(42,58,106,.3);
+}
+
+.detail-section .kv .k { color: var(--muted); }
+.detail-section .kv .v { color: var(--white); text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+
+/* Next steps guidance */
+.next-steps {
+  grid-column: 1 / -1;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+
+.next-steps.auto_merge_ready { background: rgba(46,204,113,.08); border: 1px solid rgba(46,204,113,.2); }
+.next-steps.human_review { background: rgba(243,156,18,.08); border: 1px solid rgba(243,156,18,.2); }
+.next-steps.blocked { background: rgba(231,76,60,.08); border: 1px solid rgba(231,76,60,.2); }
+
+.next-steps h3 {
+  font-family: var(--font-head);
+  font-size: .9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.next-steps.auto_merge_ready h3 { color: var(--green); }
+.next-steps.human_review h3 { color: var(--orange); }
+.next-steps.blocked h3 { color: var(--red); }
+
+/* Evidence preview */
+.evidence-preview {
+  grid-column: 1 / -1;
+  background: var(--navy-deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: 'Outfit', monospace;
+  font-size: .78rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Detail links row */
+.detail-links {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--navy-light);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .82rem;
+  color: var(--gold);
+  text-decoration: none;
+  transition: all .15s;
+}
+
+.detail-link:hover { border-color: var(--gold); background: var(--navy-card); text-decoration: none; }
 
 /* ── Audit Log ──────────────────────────── */
 .audit-wrap {
@@ -281,7 +474,7 @@ a:hover { text-decoration: underline; }
   overflow-y: auto;
   padding: 0 20px 16px;
   flex: 1;
-  font-size: .8rem;
+  font-size: .78rem;
   font-family: 'Outfit', monospace;
 }
 
@@ -309,20 +502,28 @@ a:hover { text-decoration: underline; }
 }
 
 .toast {
-  padding: 12px 18px;
-  border-radius: 8px;
+  padding: 14px 20px;
+  border-radius: 10px;
   font-size: .85rem;
   font-weight: 500;
   animation: slideIn .3s ease-out;
-  max-width: 380px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.4;
 }
 
-.toast.success { background: var(--green); color: #fff; }
-.toast.error { background: var(--red); color: #fff; }
-.toast.info { background: var(--blue); color: #fff; }
+.toast.success { background: linear-gradient(135deg, #1a4a2e, #1e5c35); color: #fff; border: 1px solid rgba(46,204,113,.3); }
+.toast.error { background: linear-gradient(135deg, #4a1a1a, #5c1e1e); color: #fff; border: 1px solid rgba(231,76,60,.3); }
+.toast.info { background: linear-gradient(135deg, #1a2a4a, #1e355c); color: #fff; border: 1px solid rgba(52,152,219,.3); }
+.toast.completion { background: linear-gradient(135deg, #2a1a00, #3d2a05); color: #fff; border: 1px solid rgba(201,162,39,.4); }
+
+.toast-icon { font-size: 1.2rem; flex-shrink: 0; }
 
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
 </style>
 </head>
 <body>
@@ -330,9 +531,12 @@ a:hover { text-decoration: underline; }
 <!-- Header -->
 <header>
   <h1>🛡️ Shield<span>Ops</span> — Control Plane</h1>
-  <div class="conn-badge">
-    <div class="conn-dot" id="connDot"></div>
-    <span id="connText">Connecting…</span>
+  <div class="header-right">
+    <span class="last-updated" id="lastUpdated"></span>
+    <div class="conn-badge">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connText">Connecting…</span>
+    </div>
   </div>
 </header>
 
@@ -351,8 +555,12 @@ a:hover { text-decoration: underline; }
     <div class="label">Blocked / Failed</div>
   </div>
   <div class="card prs">
-    <div class="value" id="metPRs">–</div>
+    <div class="value" id="metAutoMerge">–</div>
     <div class="label">Auto-Merge Ready</div>
+  </div>
+  <div class="card human">
+    <div class="value" id="metHumanReview">–</div>
+    <div class="label">Needs Human</div>
   </div>
 </div>
 
@@ -402,16 +610,28 @@ a:hover { text-decoration: underline; }
             <tr>
               <th>Issue</th>
               <th>Status</th>
+              <th>Policy Decision</th>
+              <th>Confidence</th>
+              <th>PR</th>
               <th>Session</th>
-              <th>Policy Route</th>
               <th>Started</th>
               <th>Duration</th>
             </tr>
           </thead>
           <tbody id="sessionsBody">
-            <tr><td colspan="6" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>
+            <tr><td colspan="8" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Session Detail Panel (hidden by default) -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-header">
+        <h2>🔍 Session Detail</h2>
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+      </div>
+      <div class="detail-body" id="detailBody">
       </div>
     </div>
 
@@ -432,14 +652,20 @@ a:hover { text-decoration: underline; }
 <script>
 const BASE = window.location.origin;
 let lastEventCount = 0;
+let prevSessionStates = {};  // track state transitions for completion toasts
+let selectedSession = null;
 
 // ── Toast ──
-function toast(msg, type = 'info') {
+function toast(msg, type = 'info', icon = '', duration = 5000) {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
-  el.textContent = msg;
+  el.innerHTML = (icon ? '<span class="toast-icon">' + icon + '</span>' : '') +
+                 '<span>' + msg + '</span>';
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => {
+    el.style.animation = 'fadeOut .3s ease-out forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
 }
 
 // ── Custom toggle ──
@@ -462,14 +688,14 @@ async function simulate(type) {
     });
     const data = await r.json();
     if (r.ok) {
-      toast('Issue simulated: ' + (data.issue || type), 'success');
+      toast('Session launched for issue #' + (data.issue || type), 'success', '🚀');
     } else {
-      toast('Error: ' + (data.detail || r.status), 'error');
+      toast('Error: ' + (data.detail || r.status), 'error', '❌');
     }
   } catch (e) {
-    toast('Network error: ' + e.message, 'error');
+    toast('Network error: ' + e.message, 'error', '❌');
   }
-  poll(); // immediate refresh
+  poll();
 }
 
 async function testWebhook() {
@@ -483,25 +709,25 @@ async function testWebhook() {
       body: JSON.stringify({}),
     });
     const data = await r.json();
-    toast('Webhook responded: ' + JSON.stringify(data), 'success');
+    toast('Webhook responded: ' + JSON.stringify(data), 'success', '🧪');
   } catch (e) {
-    toast('Webhook error: ' + e.message, 'error');
+    toast('Webhook error: ' + e.message, 'error', '❌');
   }
 }
 
 async function createIssues() {
   try {
-    toast('Creating GitHub issues…', 'info');
+    toast('Creating GitHub issues…', 'info', '📋');
     const r = await fetch(BASE + '/api/create-issues', { method: 'POST' });
     const data = await r.json();
     if (r.ok) {
       const count = data.created ? data.created.length : 0;
-      toast('Created ' + count + ' GitHub issue(s)', 'success');
+      toast('Created ' + count + ' GitHub issue(s)', 'success', '✅');
     } else {
-      toast('Error: ' + (data.detail || r.status), 'error');
+      toast('Error: ' + (data.detail || r.status), 'error', '❌');
     }
   } catch (e) {
-    toast('Network error: ' + e.message, 'error');
+    toast('Network error: ' + e.message, 'error', '❌');
   }
 }
 
@@ -512,19 +738,166 @@ function fmtTime(iso) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-function fmtDuration(startIso) {
+function fmtDuration(startIso, endIso) {
   if (!startIso) return '–';
-  const s = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+  const end = endIso ? new Date(endIso).getTime() : Date.now();
+  const s = Math.floor((end - new Date(startIso).getTime()) / 1000);
+  if (s < 0) return '–';
   if (s < 60) return s + 's';
   return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
 }
 
 function statusBadge(status) {
-  const icons = { running: '🟢', completed: '✅', blocked: '🔴', failed: '🔴' };
+  const icons = { running: '⏳', completed: '✅', blocked: '🔴', failed: '💥' };
   return '<span class="status-badge status-' + status + '">' + (icons[status] || '⚪') + ' ' + status + '</span>';
 }
 
+function policyBadge(decision, triageRoute) {
+  if (!decision && !triageRoute) return '<span class="policy-badge policy-pending">⏳ pending</span>';
+  const d = decision || triageRoute;
+  const labels = {
+    auto_merge_ready: '🟢 auto-merge',
+    human_review: '🟡 needs human',
+    blocked: '🔴 blocked',
+    auto_merge: '🟢 predicted: auto',
+    human_review_predicted: '🟡 predicted: human',
+  };
+  const label = labels[d] || d;
+  const cls = decision ? d : 'pending';
+  return '<span class="policy-badge policy-' + cls + '">' + label + '</span>';
+}
+
+function confidenceBar(confidence) {
+  if (confidence === undefined || confidence === null) return '–';
+  const pct = Math.round(confidence * 100);
+  let color = 'var(--green)';
+  if (pct < 50) color = 'var(--red)';
+  else if (pct < 80) color = 'var(--orange)';
+  return '<div class="confidence-bar">' +
+    '<div class="confidence-track"><div class="confidence-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+    '<span style="font-size:.78rem;color:' + color + '">' + pct + '%</span></div>';
+}
+
+function flashValue(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('flash');
+  void el.offsetWidth; // reflow
+  el.classList.add('flash');
+}
+
+// ── Session Detail ──
+function showDetail(issueKey, session) {
+  selectedSession = issueKey;
+  const panel = document.getElementById('detailPanel');
+  const body = document.getElementById('detailBody');
+
+  const s = session;
+  const issue = s.issue || {};
+  const triage = s.triage || {};
+  const so = s.structured_output || {};
+  const decision = s.policy_decision;
+  const conf = s.confidence !== undefined ? s.confidence : (so.confidence || null);
+
+  // Build detail sections
+  let html = '';
+
+  // Left: Session Info
+  html += '<div class="detail-section">';
+  html += '<h3>📊 Session Info</h3>';
+  html += kv('Issue', '#' + (issue.number || '?') + ' ' + (issue.title || ''));
+  html += kv('Session ID', s.session_id || '–');
+  html += kv('Status', s.status || '–');
+  html += kv('Severity', (triage.severity || '–').toUpperCase());
+  html += kv('Type', triage.vuln_type || '–');
+  html += kv('Started', fmtTime(s.started_at));
+  html += kv('Duration', fmtDuration(s.started_at, s.completed_at));
+  html += '</div>';
+
+  // Right: Structured Output
+  html += '<div class="detail-section">';
+  html += '<h3>🤖 Devin Output</h3>';
+  if (Object.keys(so).length > 0) {
+    html += kv('Confidence', conf !== null ? Math.round(conf * 100) + '%' : '–');
+    html += kv('Tests Passed', so.tests_passed ? '✅ Yes' : '❌ No');
+    html += kv('Breaking Changes', so.breaking_changes_detected ? '⚠️ Yes' : '✅ None');
+    html += kv('Files Touched', (so.files_touched || []).length + ' files');
+    html += kv('Changes', so.changes_summary || '–');
+    if (so.breaking_changes_notes) html += kv('Breaking Notes', so.breaking_changes_notes);
+    if (so.reachability_assessment) html += kv('Reachability', so.reachability_assessment);
+  } else {
+    html += '<div style="color:var(--muted);font-size:.82rem;padding:10px 0">No structured output yet</div>';
+  }
+  html += '</div>';
+
+  // Next Steps guidance
+  if (decision) {
+    const nextStepsMap = {
+      auto_merge_ready: {
+        icon: '✅',
+        title: 'Safe to Merge',
+        text: 'Tests pass, no breaking changes, high confidence. This PR can be auto-merged safely. No human action required.',
+      },
+      human_review: {
+        icon: '🟡',
+        title: 'Review Required',
+        text: 'Review the evidence bundle on the PR. Expected review time: ~2 minutes. Look for: sensitive path changes, breaking change handling, confidence level.',
+      },
+      blocked: {
+        icon: '🔴',
+        title: 'Manual Investigation Needed',
+        text: 'This fix could not be safely merged automatically. Check the session output for errors, failing tests, or low confidence. May need manual remediation.',
+      },
+    };
+    const ns = nextStepsMap[decision];
+    if (ns) {
+      html += '<div class="next-steps ' + decision + '">';
+      html += '<h3>' + ns.icon + ' Next Steps: ' + ns.title + '</h3>';
+      html += '<p>' + ns.text + '</p>';
+      html += '</div>';
+    }
+  }
+
+  // Links
+  html += '<div class="detail-links">';
+  if (s.pr_url) html += '<a class="detail-link" href="' + s.pr_url + '" target="_blank">🔗 Pull Request</a>';
+  if (s.session_url) html += '<a class="detail-link" href="' + s.session_url + '" target="_blank">🤖 Devin Session</a>';
+  if (issue.number) html += '<a class="detail-link" href="https://github.com/' +
+    (window.__repoOwner || 'gaurav21') + '/' + (window.__repoName || 'superset') +
+    '/issues/' + issue.number + '" target="_blank">📋 GitHub Issue</a>';
+  html += '</div>';
+
+  // Evidence preview (if structured output exists)
+  if (Object.keys(so).length > 0) {
+    html += '<div class="evidence-preview">' + escHtml(JSON.stringify(so, null, 2)) + '</div>';
+  }
+
+  body.innerHTML = html;
+  panel.classList.add('show');
+
+  // Highlight selected row
+  document.querySelectorAll('#sessionsBody tr').forEach(r => r.classList.remove('selected'));
+  const row = document.querySelector('[data-key="' + issueKey + '"]');
+  if (row) row.classList.add('selected');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('show');
+  selectedSession = null;
+  document.querySelectorAll('#sessionsBody tr').forEach(r => r.classList.remove('selected'));
+}
+
+function kv(key, val) {
+  return '<div class="kv"><span class="k">' + key + '</span><span class="v">' + escHtml(String(val)) + '</span></div>';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Polling ──
+let prevCounters = {};
+
 async function poll() {
   try {
     const r = await fetch(BASE + '/status');
@@ -534,62 +907,122 @@ async function poll() {
     // Connection indicator
     document.getElementById('connDot').className = 'conn-dot ok';
     document.getElementById('connText').textContent = 'Connected';
+    document.getElementById('lastUpdated').textContent = 'Updated ' + fmtTime(data.timestamp || new Date().toISOString());
 
-    // Metric cards
+    // Metric cards with flash animation on change
     const c = data.counters || {};
-    document.getElementById('metActive').textContent = c.active || 0;
-    document.getElementById('metCompleted').textContent = c.completed || 0;
-    document.getElementById('metBlocked').textContent = (c.blocked || 0) + (c.failed || 0);
-    document.getElementById('metPRs').textContent = c.auto_merge || 0;
+    updateMetric('metActive', c.active || 0);
+    updateMetric('metCompleted', c.completed || 0);
+    updateMetric('metBlocked', (c.blocked || 0) + (c.failed || 0));
+    updateMetric('metAutoMerge', c.auto_merge || 0);
+    updateMetric('metHumanReview', c.human_review || 0);
+    prevCounters = {...c};
 
     // Sessions table
     const sessions = data.sessions || {};
     const keys = Object.keys(sessions);
     const tbody = document.getElementById('sessionsBody');
 
+    // Detect state transitions for completion toasts
+    for (const k of keys) {
+      const s = sessions[k];
+      const prev = prevSessionStates[k];
+      if (prev === 'running' && s.status !== 'running') {
+        // Session just transitioned!
+        const decision = s.policy_decision;
+        const issue = s.issue || {};
+        if (s.status === 'completed' || s.status === 'blocked') {
+          const toastMap = {
+            auto_merge_ready: { msg: '🟢 Auto-merge ready', icon: '✅', type: 'completion' },
+            human_review: { msg: '🟡 Needs human review', icon: '👀', type: 'completion' },
+            blocked: { msg: '🔴 Blocked — manual action needed', icon: '🚫', type: 'error' },
+          };
+          const t = toastMap[decision] || { msg: 'Session completed', icon: '✅', type: 'completion' };
+          toast(
+            '<strong>#' + (issue.number || '?') + '</strong> — ' + t.msg +
+            (s.pr_url ? '<br><a href="' + s.pr_url + '" target="_blank" style="color:var(--gold)">View PR →</a>' : ''),
+            t.type, t.icon, 8000
+          );
+        } else if (s.status === 'failed') {
+          toast(
+            '<strong>#' + (issue.number || '?') + '</strong> — Session failed' +
+            (s.error ? ': ' + s.error : ''),
+            'error', '💥', 8000
+          );
+        }
+      }
+    }
+    // Save current states
+    prevSessionStates = {};
+    for (const k of keys) prevSessionStates[k] = sessions[k].status;
+
     if (keys.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>';
     } else {
       tbody.innerHTML = keys.map(k => {
         const s = sessions[k];
         const issue = s.issue || {};
         const triage = s.triage || {};
-        const sessionUrl = s.session_url
+        const so = s.structured_output || {};
+        const conf = s.confidence !== undefined ? s.confidence : (so.confidence || null);
+        const sessionLink = s.session_url
           ? '<a href="' + s.session_url + '" target="_blank">Open ↗</a>'
           : '–';
-        return '<tr>' +
-          '<td><strong>#' + (issue.number || '?') + '</strong> ' + (issue.title || k).substring(0, 40) + '</td>' +
+        const prLink = s.pr_url
+          ? '<a href="' + s.pr_url + '" target="_blank">PR ↗</a>'
+          : '–';
+        const title = (issue.title || k);
+        const truncTitle = title.length > 35 ? title.substring(0, 35) + '…' : title;
+
+        return '<tr class="clickable' + (selectedSession === k ? ' selected' : '') +
+          '" data-key="' + k + '" onclick=\'showDetail("' + k + '",' + JSON.stringify(s).replace(/'/g, "\\'") + ')\'>' +
+          '<td><strong>#' + (issue.number || '?') + '</strong> ' + escHtml(truncTitle) + '</td>' +
           '<td>' + statusBadge(s.status || 'unknown') + '</td>' +
-          '<td>' + sessionUrl + '</td>' +
-          '<td>' + (s.policy_decision || triage.predicted_route || '–') + '</td>' +
+          '<td>' + policyBadge(s.policy_decision, triage.predicted_route) + '</td>' +
+          '<td>' + confidenceBar(conf) + '</td>' +
+          '<td>' + prLink + '</td>' +
+          '<td>' + sessionLink + '</td>' +
           '<td>' + fmtTime(s.started_at) + '</td>' +
-          '<td>' + fmtDuration(s.started_at) + '</td>' +
+          '<td>' + fmtDuration(s.started_at, s.completed_at) + '</td>' +
           '</tr>';
       }).join('');
+    }
+
+    // Update detail panel if open
+    if (selectedSession && sessions[selectedSession]) {
+      showDetail(selectedSession, sessions[selectedSession]);
     }
 
     // Audit log
     const events = data.recent_events || [];
     if (events.length > 0) {
       const logEl = document.getElementById('auditLog');
-      // Only re-render if new events
       if (events.length !== lastEventCount) {
         lastEventCount = events.length;
-        logEl.innerHTML = events.map(e =>
+        logEl.innerHTML = events.slice().reverse().map(e =>
           '<div class="audit-entry">' +
             '<span class="audit-ts">' + fmtTime(e.ts) + '</span>' +
-            '<span class="audit-issue">' + (e.issue || '') + '</span>' +
-            '<span class="audit-stage">' + (e.stage || '') + '</span>' +
-            '<span class="audit-detail">' + (e.detail || '') + '</span>' +
+            '<span class="audit-issue">' + escHtml(e.issue || '') + '</span>' +
+            '<span class="audit-stage">' + escHtml(e.stage || '') + '</span>' +
+            '<span class="audit-detail">' + escHtml(e.detail || '') + '</span>' +
           '</div>'
         ).join('');
-        logEl.scrollTop = logEl.scrollHeight;
       }
     }
 
   } catch (e) {
     document.getElementById('connDot').className = 'conn-dot';
     document.getElementById('connText').textContent = 'Disconnected';
+  }
+}
+
+function updateMetric(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const prev = el.textContent;
+  el.textContent = value;
+  if (prev !== '–' && prev !== String(value)) {
+    flashValue(id);
   }
 }
 

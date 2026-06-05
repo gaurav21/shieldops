@@ -236,10 +236,18 @@ async def _launch_session(issue: dict, triage_result: dict):
 
 
 async def _poll_session(issue_key: str, session_id: str, triage_result: dict):
-    """Poll a Devin session until terminal status or timeout."""
+    """Poll a Devin session until terminal status or timeout.
+
+    v3 API completion detection:
+    - Complete when: status_detail == "waiting_for_user" AND structured_output is not None
+    - Also complete when: status in ("finished", "stopped", "suspended") AND structured_output is not None
+    - Failed when: status in ("error", "timed_out")
+    - Still running when: status == "running" AND status_detail != "waiting_for_user"
+    """
     assert _devin_client is not None
 
-    terminal_statuses = {"finished", "stopped", "error", "timed_out"}
+    hard_terminal = {"error", "timed_out"}
+    soft_terminal = {"finished", "stopped", "suspended"}
     start = datetime.now(timezone.utc)
 
     while True:
@@ -255,15 +263,44 @@ async def _poll_session(issue_key: str, session_id: str, triage_result: dict):
 
         try:
             session = await _devin_client.get_session(session_id)
-            state.record_event(issue_key, "poll", f"status={session.status}")
+            detail = session.status_detail or ""
+            state.record_event(
+                issue_key, "poll",
+                f"status={session.status}, status_detail={detail}, "
+                f"has_output={session.structured_output is not None}",
+            )
 
-            if session.status not in terminal_statuses:
-                continue
+            # Hard failure — no recovery
+            if session.status in hard_terminal:
+                logger.info(f"Session {session_id} failed: {session.status}")
+                state.complete_session(issue_key, error=f"Session status: {session.status}")
+                record_session_failed(session_id, triage_result["severity"])
+                record_active_sessions(state.counters["active"])
+                return
 
-            # Terminal — process result
-            logger.info(f"Session {session_id} reached terminal status: {session.status}")
-            await _process_terminal(issue_key, session_id, session, triage_result)
-            return
+            # v3 completion: work done, waiting for user, structured output ready
+            if detail == "waiting_for_user" and session.structured_output is not None:
+                logger.info(
+                    f"Session {session_id} completed (v3: status_detail=waiting_for_user, "
+                    f"structured_output present)"
+                )
+                await _process_terminal(issue_key, session_id, session, triage_result)
+                return
+
+            # Classic terminal: finished/stopped/suspended with output
+            if session.status in soft_terminal and session.structured_output is not None:
+                logger.info(f"Session {session_id} reached terminal status: {session.status}")
+                await _process_terminal(issue_key, session_id, session, triage_result)
+                return
+
+            # Soft terminal without output — still count as done (legacy)
+            if session.status in soft_terminal:
+                logger.info(f"Session {session_id} terminal ({session.status}) but no structured output")
+                await _process_terminal(issue_key, session_id, session, triage_result)
+                return
+
+            # Still running
+            continue
 
         except Exception as e:
             logger.warning(f"Poll error for {session_id}: {e}")
@@ -382,23 +419,27 @@ async def _process_terminal(issue_key: str, session_id: str, session, triage_res
         except Exception as e:
             logger.warning(f"Failed to post evidence to issue #{issue_number}: {e}")
 
-    # Apply label based on policy decision
+    # Post evidence bundle to PR as comment + apply label
     label_map = {
         "auto_merge_ready": "auto-merge-ready",
         "human_review": "needs-human-review",
         "blocked": "blocked",
     }
     label = label_map.get(decision_str)
-    if label and issue_number and _config:
+
+    if pr_url and _config:
+        await _post_evidence_to_pr(pr_url, evidence_md, label)
+    elif label and issue_number and _config:
+        # Fallback: apply label to issue if no PR
         try:
-            import httpx
+            import httpx as _httpx
             headers = {
                 "Authorization": f"token {_config.github.token}",
                 "Accept": "application/vnd.github.v3+json",
             }
             url = (f"https://api.github.com/repos/{_config.github.repo_owner}/"
                    f"{_config.github.repo_name}/issues/{issue_number}/labels")
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with _httpx.AsyncClient(timeout=10) as client:
                 await client.post(url, headers=headers, json={"labels": [label]})
             logger.info(f"Applied label '{label}' to issue #{issue_number}")
         except Exception as e:
@@ -417,7 +458,62 @@ async def _process_terminal(issue_key: str, session_id: str, session, triage_res
             tags=[f"severity:{severity}", f"decision:{decision_str}", "source:shieldops"],
         )
 
+    # Store extended completion info in state for dashboard
+    state.update_session(
+        issue_key,
+        structured_output=structured,
+        confidence=confidence,
+        evidence_posted=True,
+    )
+
     state.record_event(issue_key, "evidence_posted", f"decision={decision_str}")
+
+
+async def _post_evidence_to_pr(pr_url: str, evidence_md: str, label: str | None):
+    """Post evidence bundle comment and apply label to a GitHub PR."""
+    assert _config is not None
+    import re
+
+    # Parse owner/repo/number from PR URL
+    # Formats: https://github.com/owner/repo/pull/123
+    match = re.match(r"https://github\.com/([^/]+)/([^/]+)/pull/(\d+)", pr_url)
+    if not match:
+        logger.warning(f"Cannot parse PR URL: {pr_url}")
+        return
+
+    owner, repo, pr_number = match.group(1), match.group(2), match.group(3)
+    headers = {
+        "Authorization": f"token {_config.github.token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        # Post evidence as PR comment (uses issues API which works for PRs)
+        try:
+            comment_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments"
+            resp = await client.post(
+                comment_url,
+                headers=headers,
+                json={"body": evidence_md},
+            )
+            resp.raise_for_status()
+            logger.info(f"Posted evidence bundle to PR {pr_url}")
+        except Exception as e:
+            logger.warning(f"Failed to post evidence to PR {pr_url}: {e}")
+
+        # Apply label
+        if label:
+            try:
+                label_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/labels"
+                resp = await client.post(
+                    label_url,
+                    headers=headers,
+                    json={"labels": [label]},
+                )
+                resp.raise_for_status()
+                logger.info(f"Applied label '{label}' to PR {pr_url}")
+            except Exception as e:
+                logger.warning(f"Failed to apply label to PR {pr_url}: {e}")
 
 
 def _extract_package(title: str) -> str:

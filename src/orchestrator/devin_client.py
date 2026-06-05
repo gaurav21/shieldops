@@ -23,6 +23,7 @@ class DevinSession:
     created_at: Optional[datetime] = None
     pull_request_url: Optional[str] = None
     structured_output: Optional[dict] = None
+    status_detail: Optional[str] = None
 
 
 class DevinClient:
@@ -84,7 +85,7 @@ class DevinClient:
             return session
 
     async def get_session(self, session_id: str) -> DevinSession:
-        """Get current status of a Devin session."""
+        """Get current status of a Devin session (v3 API compatible)."""
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
                 f"{self.base_url}/sessions/{session_id}",
@@ -93,13 +94,23 @@ class DevinClient:
             resp.raise_for_status()
             data = resp.json()
 
+            # v3: pull_requests is an array of {pr_url, pr_state}
+            # v1: pull_request_url is a string
+            pr_url = None
+            pull_requests = data.get("pull_requests")
+            if pull_requests and len(pull_requests) > 0:
+                pr_url = pull_requests[0].get("pr_url")
+            if not pr_url:
+                pr_url = data.get("pull_request_url")
+
             return DevinSession(
                 session_id=session_id,
                 url=data.get("url", ""),
                 status=data.get("status_enum", data.get("status", "unknown")),
                 title=data.get("title"),
-                pull_request_url=data.get("pull_request_url"),
+                pull_request_url=pr_url,
                 structured_output=data.get("structured_output"),
+                status_detail=data.get("status_detail"),
             )
 
     async def send_message(self, session_id: str, message: str) -> bool:
@@ -135,12 +146,21 @@ class DevinClient:
 
             sessions = []
             for s in data.get("items", data.get("sessions", [])):
+                # v3: pull_requests array
+                pr_url = None
+                prs = s.get("pull_requests")
+                if prs and len(prs) > 0:
+                    pr_url = prs[0].get("pr_url")
+                if not pr_url:
+                    pr_url = s.get("pull_request_url")
+
                 sessions.append(DevinSession(
                     session_id=s["session_id"],
                     url=s.get("url", ""),
                     status=s.get("status_enum", s.get("status", "unknown")),
                     title=s.get("title"),
-                    pull_request_url=s.get("pull_request_url"),
+                    pull_request_url=pr_url,
+                    status_detail=s.get("status_detail"),
                 ))
             return sessions
 
