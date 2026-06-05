@@ -53,7 +53,7 @@ Dependabot opens a PR bumping Flask. Build breaks — breaking imports, changed 
 
 **Devin read the Flask 3.x CHANGELOG, found all version constraints across 5 files, updated `pyproject.toml`, `requirements/base.txt`, `requirements/development.txt`, fixed integration test imports, fixed security dataset tests, and verified no breaking API calls remained.**
 
-Result: [**PR #10**](https://github.com/gaurav21/superset/pull/10) — `+11/−12` across 5 files. Clean. Mergeable. Zero human intervention.
+Result: [**PR #10**](https://github.com/gaurav21/superset/pull/10) — `+11/−12` across 5 files. Clean. Mergeable. Devin produced the fix with zero follow-up messages — then the policy boundary correctly routed it to human review (major upgrade), with an evidence bundle so approval takes two minutes.
 
 ### All Devin-Authored PRs
 
@@ -63,7 +63,7 @@ Result: [**PR #10**](https://github.com/gaurav21/superset/pull/10) — `+11/−1
 | **#9** | Paramiko CVE-2026-44405 — 3.5.1→5.0.0, breaking changes handled | `+8/−4` | [View PR](https://github.com/gaurav21/superset/pull/9) |
 | **#10** | **Flask 2.3→3.x — major version upgrade across 500K LOC codebase** | `+11/−12` | [View PR](https://github.com/gaurav21/superset/pull/10) |
 
-Plus **7 auto-created issues** with severity labels (1 CRITICAL, 3 HIGH, 2 MEDIUM) and **4 PRs improving ShieldOps itself** (error handling, security fixes, unit tests 0→40%, code refactoring).
+Plus **7 auto-created issues** with severity labels (1 CRITICAL, 3 HIGH, 1 MEDIUM, 1 LOW) and **4 PRs improving ShieldOps itself** (error handling, security fixes, unit tests 0→40%, code refactoring).
 
 ### Key Metrics
 
@@ -72,7 +72,7 @@ Plus **7 auto-created issues** with severity labels (1 CRITICAL, 3 HIGH, 2 MEDIU
 | Devin sessions launched | 3 |
 | PRs delivered | 3 |
 | Time to first PR | < 8 minutes |
-| Human intervention rate | 0% |
+| Follow-up messages to produce fixes | 0 |
 | Breaking changes handled | 2 (paramiko + Flask) |
 
 ## The Trust Boundary
