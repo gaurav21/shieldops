@@ -20,6 +20,8 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from src.config import Config
@@ -454,10 +456,140 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Mount static files
+import pathlib as _pathlib
+_static_dir = _pathlib.Path(__file__).parent / "static"
+if _static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard():
+    """Serve the ShieldOps control-plane dashboard."""
+    html_path = _pathlib.Path(__file__).parent / "static" / "dashboard.html"
+    return FileResponse(str(html_path), media_type="text/html")
+
+
+# ---------------------------------------------------------------------------
+# Simulation / demo endpoints (for the dashboard)
+# ---------------------------------------------------------------------------
+
+_DEMO_ISSUES = {
+    "flask": {
+        "number": 101,
+        "title": "[CRITICAL] Flask 2.3.3 EOL — upgrade to Flask 3.x",
+        "body": "Flask 2.3.3 has reached end-of-life.  Upgrade to 3.1.1.\nBreaking API changes expected.",
+        "labels": [{"name": "shieldops"}, {"name": "critical"}, {"name": "security"}],
+    },
+    "paramiko": {
+        "number": 102,
+        "title": "[LOW] Paramiko CVE-2026-44405 — SSH key validation bypass",
+        "body": "Paramiko < 5.0.0 SSH key validation bypass.  Major version bump.",
+        "labels": [{"name": "shieldops"}, {"name": "low"}, {"name": "security"}],
+    },
+    "dockerfile": {
+        "number": 103,
+        "title": "[MEDIUM] Dockerfile hardening — SHA256 digests & remove dev packages",
+        "body": "Pin base image digest, remove dev packages, add HEALTHCHECK, non-root user.",
+        "labels": [{"name": "shieldops"}, {"name": "medium"}, {"name": "security"}, {"name": "container"}],
+    },
+    "npm": {
+        "number": 104,
+        "title": "[HIGH] npm audit findings — multiple frontend dependency vulnerabilities",
+        "body": "postcss, semver, word-wrap ReDoS vulnerabilities in superset-frontend.",
+        "labels": [{"name": "shieldops"}, {"name": "high"}, {"name": "security"}, {"name": "frontend"}],
+    },
+}
+
+
+@app.post("/api/simulate")
+async def simulate_issue(request: Request):
+    """Simulate a GitHub webhook from the dashboard UI.
+
+    Accepts {type: "flask"|"paramiko"|"dockerfile"|"npm"|"custom", title?, body?}
+    Builds a fake webhook payload and processes it through the triage → session flow.
+    """
+    data = await request.json()
+    issue_type = data.get("type", "flask")
+
+    if issue_type == "custom":
+        issue = {
+            "number": 199,
+            "title": data.get("title", "Custom security issue"),
+            "body": data.get("body", "Custom issue submitted from dashboard"),
+            "labels": [{"name": "shieldops"}, {"name": "high"}, {"name": "security"}],
+        }
+    else:
+        issue = _DEMO_ISSUES.get(issue_type)
+        if not issue:
+            return JSONResponse({"detail": f"Unknown issue type: {issue_type}"}, status_code=400)
+
+    # Run through the same triage logic
+    triage_result = _triage_issue(issue)
+    issue_key = f"sim#{issue['number']}"
+
+    state.record_event(
+        issue_key,
+        "simulated",
+        f"type={issue_type}, triage={triage_result['predicted_route']}",
+    )
+
+    # Launch Devin session (will fail gracefully if no API key)
+    asyncio.create_task(_launch_session(issue, triage_result))
+
+    return {
+        "status": "accepted",
+        "issue": issue['number'],
+        "title": issue['title'],
+        "triage": triage_result,
+    }
+
+
+@app.post("/api/create-issues")
+async def api_create_issues():
+    """Create real GitHub issues via the create_issues.py script."""
+    import subprocess
+    script = _pathlib.Path(__file__).parent / "scripts" / "create_issues.py"
+    if not script.exists():
+        return JSONResponse({"detail": "create_issues.py not found"}, status_code=404)
+
+    try:
+        result = subprocess.run(
+            ["python3", str(script)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=str(script.parent.parent),
+        )
+        # Parse output for created issue URLs
+        created = []
+        for line in result.stdout.splitlines():
+            if "✅ Created:" in line:
+                url = line.split("Created:")[-1].strip()
+                created.append({"url": url})
+
+        state.record_event(
+            "github",
+            "create_issues",
+            f"created={len(created)}, exit={result.returncode}",
+        )
+
+        return {
+            "status": "ok" if result.returncode == 0 else "error",
+            "created": created,
+            "stdout": result.stdout[-500:] if result.stdout else "",
+            "stderr": result.stderr[-300:] if result.stderr else "",
+        }
+    except subprocess.TimeoutExpired:
+        return JSONResponse({"detail": "Script timed out"}, status_code=504)
+    except Exception as e:
+        return JSONResponse({"detail": str(e)}, status_code=500)
+
 
 @app.post("/webhook/github")
 async def webhook_github(request: Request):

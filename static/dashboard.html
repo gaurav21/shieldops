@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldOps — Control Plane</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0E1A40;
+  --navy-light: #162050;
+  --navy-card: #1A2654;
+  --gold: #C9A227;
+  --gold-dim: #8B7118;
+  --green: #2ECC71;
+  --red: #E74C3C;
+  --orange: #F39C12;
+  --blue: #3498DB;
+  --white: #F0F0F0;
+  --muted: #8899BB;
+  --border: #2A3A6A;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'Outfit', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--navy);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 400;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+}
+
+header h1 {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: .5px;
+}
+
+header h1 span { color: var(--gold); }
+
+.conn-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  color: var(--muted);
+}
+
+.conn-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+  transition: background .3s;
+}
+
+.conn-dot.ok { background: var(--green); }
+
+/* ── Metric Cards ───────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  padding: 20px 28px;
+}
+
+.card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color .2s;
+}
+
+.card:hover { border-color: var(--gold); }
+.card .value { font-family: var(--font-head); font-size: 2.4rem; font-weight: 700; }
+.card .label { color: var(--muted); font-size: .82rem; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.card.active .value { color: var(--blue); }
+.card.completed .value { color: var(--green); }
+.card.blocked .value { color: var(--red); }
+.card.prs .value { color: var(--gold); }
+
+/* ── Main Layout ────────────────────────── */
+.main {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+  padding: 0 28px 20px;
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+}
+
+/* ── Actions Panel ──────────────────────── */
+.panel {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel h2 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.panel button {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: .88rem;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--navy-light);
+  color: var(--white);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+
+.panel button:hover { border-color: var(--gold); background: var(--navy-card); }
+.panel button:active { transform: scale(.97); }
+.panel button.primary { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
+.panel button.primary:hover { background: #D4AD2F; }
+
+.severity-tag {
+  display: inline-block;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.sev-critical { background: var(--red); color: #fff; }
+.sev-high { background: var(--orange); color: #fff; }
+.sev-medium { background: var(--blue); color: #fff; }
+.sev-low { background: #6C7A89; color: #fff; }
+
+.custom-fields {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.custom-fields.show { display: flex; }
+
+.custom-fields input, .custom-fields textarea {
+  font-family: var(--font-body);
+  font-size: .85rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--navy);
+  color: var(--white);
+  resize: vertical;
+}
+
+.custom-fields textarea { min-height: 70px; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 4px 0;
+}
+
+/* ── Right Column ───────────────────────── */
+.right-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ── Sessions Table ─────────────────────── */
+.table-wrap {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.table-wrap h2 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 16px 20px 12px;
+  color: var(--gold);
+}
+
+.table-scroll { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .84rem;
+}
+
+th {
+  text-align: left;
+  padding: 8px 14px;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(42,58,106,.4);
+  white-space: nowrap;
+}
+
+tr:hover td { background: rgba(201,162,39,.04); }
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.status-running { background: rgba(52,152,219,.2); color: var(--blue); }
+.status-completed { background: rgba(46,204,113,.2); color: var(--green); }
+.status-failed, .status-blocked { background: rgba(231,76,60,.2); color: var(--red); }
+
+a { color: var(--gold); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+/* ── Audit Log ──────────────────────────── */
+.audit-wrap {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-wrap h2 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 16px 20px 12px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.audit-log {
+  overflow-y: auto;
+  padding: 0 20px 16px;
+  flex: 1;
+  font-size: .8rem;
+  font-family: 'Outfit', monospace;
+}
+
+.audit-entry {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(42,58,106,.3);
+  display: flex;
+  gap: 10px;
+}
+
+.audit-ts { color: var(--muted); flex-shrink: 0; min-width: 75px; }
+.audit-issue { color: var(--gold); flex-shrink: 0; min-width: 90px; font-weight: 500; }
+.audit-stage { color: var(--blue); flex-shrink: 0; min-width: 100px; }
+.audit-detail { color: var(--white); opacity: .8; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Toast ───────────────────────────────── */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: .85rem;
+  font-weight: 500;
+  animation: slideIn .3s ease-out;
+  max-width: 380px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+.toast.success { background: var(--green); color: #fff; }
+.toast.error { background: var(--red); color: #fff; }
+.toast.info { background: var(--blue); color: #fff; }
+
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🛡️ Shield<span>Ops</span> — Control Plane</h1>
+  <div class="conn-badge">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connText">Connecting…</span>
+  </div>
+</header>
+
+<!-- Metric Cards -->
+<div class="metrics">
+  <div class="card active">
+    <div class="value" id="metActive">–</div>
+    <div class="label">Active Sessions</div>
+  </div>
+  <div class="card completed">
+    <div class="value" id="metCompleted">–</div>
+    <div class="label">Completed</div>
+  </div>
+  <div class="card blocked">
+    <div class="value" id="metBlocked">–</div>
+    <div class="label">Blocked / Failed</div>
+  </div>
+  <div class="card prs">
+    <div class="value" id="metPRs">–</div>
+    <div class="label">Auto-Merge Ready</div>
+  </div>
+</div>
+
+<!-- Main Layout -->
+<div class="main">
+
+  <!-- Actions Panel -->
+  <div class="panel">
+    <h2>⚡ Actions</h2>
+
+    <button onclick="simulate('flask')" class="primary">
+      🚀 Flask 2.3.3 → 3.x <span class="severity-tag sev-critical">CRITICAL</span>
+    </button>
+    <button onclick="simulate('paramiko')">
+      🚀 Paramiko CVE-2026-44405 <span class="severity-tag sev-low">LOW</span>
+    </button>
+    <button onclick="simulate('dockerfile')">
+      🚀 Dockerfile Hardening <span class="severity-tag sev-medium">MEDIUM</span>
+    </button>
+    <button onclick="simulate('npm')">
+      🚀 npm audit findings <span class="severity-tag sev-high">HIGH</span>
+    </button>
+
+    <button onclick="toggleCustom()">
+      🎯 Custom Issue…
+    </button>
+    <div class="custom-fields" id="customFields">
+      <input type="text" id="customTitle" placeholder="Issue title">
+      <textarea id="customBody" placeholder="Issue body / description"></textarea>
+      <button onclick="simulate('custom')" class="primary">Submit Custom Issue</button>
+    </div>
+
+    <hr class="divider">
+
+    <button onclick="testWebhook()">🧪 Test Webhook</button>
+    <button onclick="createIssues()">📋 Create GitHub Issues</button>
+  </div>
+
+  <!-- Right Column -->
+  <div class="right-col">
+    <!-- Sessions Table -->
+    <div class="table-wrap">
+      <h2>📡 Sessions</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Issue</th>
+              <th>Status</th>
+              <th>Session</th>
+              <th>Policy Route</th>
+              <th>Started</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsBody">
+            <tr><td colspan="6" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Audit Log -->
+    <div class="audit-wrap">
+      <h2>📋 Audit Log</h2>
+      <div class="audit-log" id="auditLog">
+        <div class="audit-entry" style="color:var(--muted)">Waiting for events…</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const BASE = window.location.origin;
+let lastEventCount = 0;
+
+// ── Toast ──
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ── Custom toggle ──
+function toggleCustom() {
+  document.getElementById('customFields').classList.toggle('show');
+}
+
+// ── API calls ──
+async function simulate(type) {
+  const body = { type };
+  if (type === 'custom') {
+    body.title = document.getElementById('customTitle').value || 'Custom security issue';
+    body.body = document.getElementById('customBody').value || 'Custom issue body from dashboard';
+  }
+  try {
+    const r = await fetch(BASE + '/api/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (r.ok) {
+      toast('Issue simulated: ' + (data.issue || type), 'success');
+    } else {
+      toast('Error: ' + (data.detail || r.status), 'error');
+    }
+  } catch (e) {
+    toast('Network error: ' + e.message, 'error');
+  }
+  poll(); // immediate refresh
+}
+
+async function testWebhook() {
+  try {
+    const r = await fetch(BASE + '/webhook/github', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-GitHub-Event': 'ping',
+      },
+      body: JSON.stringify({}),
+    });
+    const data = await r.json();
+    toast('Webhook responded: ' + JSON.stringify(data), 'success');
+  } catch (e) {
+    toast('Webhook error: ' + e.message, 'error');
+  }
+}
+
+async function createIssues() {
+  try {
+    toast('Creating GitHub issues…', 'info');
+    const r = await fetch(BASE + '/api/create-issues', { method: 'POST' });
+    const data = await r.json();
+    if (r.ok) {
+      const count = data.created ? data.created.length : 0;
+      toast('Created ' + count + ' GitHub issue(s)', 'success');
+    } else {
+      toast('Error: ' + (data.detail || r.status), 'error');
+    }
+  } catch (e) {
+    toast('Network error: ' + e.message, 'error');
+  }
+}
+
+// ── Formatting helpers ──
+function fmtTime(iso) {
+  if (!iso) return '–';
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function fmtDuration(startIso) {
+  if (!startIso) return '–';
+  const s = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+  if (s < 60) return s + 's';
+  return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+}
+
+function statusBadge(status) {
+  const icons = { running: '🟢', completed: '✅', blocked: '🔴', failed: '🔴' };
+  return '<span class="status-badge status-' + status + '">' + (icons[status] || '⚪') + ' ' + status + '</span>';
+}
+
+// ── Polling ──
+async function poll() {
+  try {
+    const r = await fetch(BASE + '/status');
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+
+    // Connection indicator
+    document.getElementById('connDot').className = 'conn-dot ok';
+    document.getElementById('connText').textContent = 'Connected';
+
+    // Metric cards
+    const c = data.counters || {};
+    document.getElementById('metActive').textContent = c.active || 0;
+    document.getElementById('metCompleted').textContent = c.completed || 0;
+    document.getElementById('metBlocked').textContent = (c.blocked || 0) + (c.failed || 0);
+    document.getElementById('metPRs').textContent = c.auto_merge || 0;
+
+    // Sessions table
+    const sessions = data.sessions || {};
+    const keys = Object.keys(sessions);
+    const tbody = document.getElementById('sessionsBody');
+
+    if (keys.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No sessions yet — trigger a demo issue to begin</td></tr>';
+    } else {
+      tbody.innerHTML = keys.map(k => {
+        const s = sessions[k];
+        const issue = s.issue || {};
+        const triage = s.triage || {};
+        const sessionUrl = s.session_url
+          ? '<a href="' + s.session_url + '" target="_blank">Open ↗</a>'
+          : '–';
+        return '<tr>' +
+          '<td><strong>#' + (issue.number || '?') + '</strong> ' + (issue.title || k).substring(0, 40) + '</td>' +
+          '<td>' + statusBadge(s.status || 'unknown') + '</td>' +
+          '<td>' + sessionUrl + '</td>' +
+          '<td>' + (s.policy_decision || triage.predicted_route || '–') + '</td>' +
+          '<td>' + fmtTime(s.started_at) + '</td>' +
+          '<td>' + fmtDuration(s.started_at) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // Audit log
+    const events = data.recent_events || [];
+    if (events.length > 0) {
+      const logEl = document.getElementById('auditLog');
+      // Only re-render if new events
+      if (events.length !== lastEventCount) {
+        lastEventCount = events.length;
+        logEl.innerHTML = events.map(e =>
+          '<div class="audit-entry">' +
+            '<span class="audit-ts">' + fmtTime(e.ts) + '</span>' +
+            '<span class="audit-issue">' + (e.issue || '') + '</span>' +
+            '<span class="audit-stage">' + (e.stage || '') + '</span>' +
+            '<span class="audit-detail">' + (e.detail || '') + '</span>' +
+          '</div>'
+        ).join('');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    }
+
+  } catch (e) {
+    document.getElementById('connDot').className = 'conn-dot';
+    document.getElementById('connText').textContent = 'Disconnected';
+  }
+}
+
+// Poll every 5 seconds
+poll();
+setInterval(poll, 5000);
+</script>
+</body>
+</html>
