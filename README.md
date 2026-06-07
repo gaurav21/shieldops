@@ -56,10 +56,19 @@ curl http://localhost:8000/health
 
 # Live status — counters, sessions, audit log
 curl http://localhost:8000/status
-
-# Web dashboard
-open http://localhost:8000
 ```
+
+### 4. Open the Dashboard
+
+Open **http://localhost:8000** in your browser. The ShieldOps control plane dashboard shows:
+
+- **Metric cards** — Active / Completed / Blocked / Auto-Merge / Human Review (click to filter)
+- **Devin Sessions (Live)** — real-time status of all Devin sessions in your org
+- **Sessions table** — triage results, policy decisions, confidence scores, PR links
+- **Audit log** — every event: webhook received, session created, policy decision, evidence posted
+- **Action buttons** — trigger demo issues directly from the UI (no GitHub webhook needed)
+
+No Datadog required — the dashboard works standalone out of the box.
 
 ### 4. Run without Docker
 
