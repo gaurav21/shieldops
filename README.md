@@ -1,140 +1,121 @@
-# 🛡️ ShieldOps — Trust Control Plane for Autonomous Security Remediation
+# 🛡️ ShieldOps — Autonomous Security Remediation with Devin AI
 
-> Devin AI + Datadog + GitHub — from scan to verified fix, autonomously.
+> From vulnerability scan to verified PR — autonomously. Devin AI + Datadog + GitHub.
 
 ShieldOps orchestrates **autonomous coding agents** to remediate security vulnerabilities that existing tools can't touch. Dependabot bumps versions and walks away when the build breaks. ShieldOps reads the CHANGELOG, fixes the call sites, iterates until green, and routes the change through a policy boundary so a human can approve it in two minutes.
 
-## The Problem
-
-Detection is solved. SAST, DAST, SCA — the scanner market is commoditized. What isn't solved is **remediation**.
-
-- Industry MTTR for critical vulnerabilities: **60–90 days**
-- Dependabot PRs that merge without human intervention: **~40%**
-- The other 60%? Build breaks. The PR sits red. An engineer closes it with "needs investigation." The CVE stays open.
-
-**The 20% of vulnerabilities that break the build are 100% of the pain.**
-
-## Architecture
-
-```
-                    ┌─────────────────────────────────┐
-                    │         GitHub Issues            │
-                    │  (labeled with "shieldops")      │
-                    └──────────┬──────────────────────┘
-                               │ webhook POST
-                               ▼
-                    ┌─────────────────────────────────┐
-                    │       trigger.py (FastAPI)       │
-                    │  • HMAC signature verification   │
-                    │  • Issue triage                  │
-                    │  • Dedup on repo#issue           │
-                    │  • Returns 200 in <1s            │
-                    └──────────┬──────────────────────┘
-                               │ asyncio.create_task
-                               ▼
-                    ┌─────────────────────────────────┐
-                    │     Devin Session (background)   │
-                    │  • Prompt from issue context     │
-                    │  • Structured output schema      │
-                    │  • Poll every 15s until terminal │
-                    └──────────┬──────────────────────┘
-                               │ terminal status
-                               ▼
-                    ┌─────────────────────────────────┐
-                    │       Policy Engine              │
-                    │  🟢 Auto-merge (high confidence) │
-                    │  🟡 Human review (breaking/major)│
-                    │  🔴 Blocked (tests fail/low conf)│
-                    └──────────┬──────────────────────┘
-                               │
-                    ┌──────────┴──────────────────────┐
-                    │  Evidence Bundle → GitHub issue  │
-                    │  Labels applied to issue/PR      │
-                    │  Metrics → Datadog               │
-                    │  Events → Datadog                │
-                    │  State → /status endpoint        │
-                    └─────────────────────────────────┘
-```
-
-### Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/webhook/github` | POST | GitHub webhook receiver — verifies signature, triggers Devin |
-| `/status` | GET | Live state — counts, sessions, audit events (no Datadog needed) |
-| `/health` | GET | Health check — app up? Devin API reachable? |
+**Live demo target:** [Apache Superset](https://github.com/apache/superset) — 500K LOC, 200+ Python dependencies.
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.11+
-- [Devin API key](https://docs.devin.ai)
-- [GitHub token](https://github.com/settings/tokens) with repo access
-- [Datadog API key](https://app.datadoghq.com/organization-settings/api-keys) (optional)
-- [gh CLI](https://cli.github.com/) (for creating demo issues)
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- [Devin API key](https://app.devin.ai/) (`cog_` prefix)
+- [GitHub personal access token](https://github.com/settings/tokens) with `repo` scope
+- [Datadog API & App keys](https://app.datadoghq.com/organization-settings/api-keys) *(optional — observability works without Datadog via `/status`)*
 
-### 1. Setup
+### 1. Clone and configure
 
 ```bash
 git clone https://github.com/gaurav21/shieldops.git
 cd shieldops
 cp .env.example .env
-# Edit .env — add your DEVIN_API_KEY, GITHUB_TOKEN, GITHUB_WEBHOOK_SECRET
-
-pip install -r requirements.txt
 ```
 
-### 2. Run Locally
+Edit `.env` with your keys:
+
+```env
+# Required
+DEVIN_API_KEY=cog_your_key_here       # From https://app.devin.ai/
+DEVIN_ORG_ID=org-your_org_id          # Your Devin organization ID
+
+# Required for webhook trigger
+GITHUB_TOKEN=ghp_your_token_here      # GitHub PAT with repo scope
+GITHUB_REPO_OWNER=your_username       # Your GitHub username
+GITHUB_REPO_NAME=superset             # Target repository name
+GITHUB_WEBHOOK_SECRET=your_secret     # Any string — must match GitHub webhook config
+
+# Optional (Datadog observability)
+DD_API_KEY=your_dd_api_key            # Datadog API key
+DD_APP_KEY=your_dd_app_key            # Datadog Application key
+DD_SITE=datadoghq.com                 # Or your Datadog region (e.g., us5.datadoghq.com)
+```
+
+### 2. Run with Docker
 
 ```bash
-# Start the webhook server
-uvicorn trigger:app --host 0.0.0.0 --port 8000
+docker compose up -d
+```
 
-# Verify it's running
+### 3. Verify
+
+```bash
+# Health check — should return {"ok": true, "devin_api": true}
 curl http://localhost:8000/health
+
+# Live status — counters, sessions, audit log
+curl http://localhost:8000/status
+
+# Web dashboard
+open http://localhost:8000
 ```
 
-### 3. Expose via Tunnel (for GitHub webhooks)
+### 4. Run without Docker
 
 ```bash
-# Option A: ngrok
-ngrok http 8000
-
-# Option B: Cloudflare Tunnel
-cloudflared tunnel --url http://localhost:8000
-
-# Option C: Tailscale Funnel
-tailscale funnel 8000
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn trigger:app --host 0.0.0.0 --port 8000
 ```
 
-Then configure the tunnel URL as a GitHub webhook:
-- **URL:** `https://<your-tunnel>/webhook/github`
+## How It Works
+
+### Event-Driven Pipeline
+
+```
+GitHub Issue (labeled "shieldops")
+    │ webhook POST
+    ▼
+ShieldOps Orchestrator (FastAPI)
+    │ • HMAC signature verification
+    │ • Severity triage
+    │ • Dedup on repo#issue
+    │ • Returns 200 in <1s
+    ▼
+Devin Session (autonomous, background)
+    │ • Structured output contract
+    │ • Polls every 15s until terminal
+    ▼
+Policy Engine (Trust Boundary)
+    ├── 🟢 AUTO-MERGE    — tests pass, high confidence, patch/minor
+    ├── 🟡 HUMAN REVIEW  — major upgrade, breaking changes, sensitive paths
+    └── 🔴 BLOCKED       — tests fail, low confidence, Devin errored
+    │
+    ▼
+Evidence Bundle → GitHub PR comment + labels
+Metrics → Datadog (14 custom metrics, 4 monitors)
+Events → Audit trail (/status endpoint)
+```
+
+### Triggering Remediation
+
+**Option A: GitHub Webhook (production)**
+
+Configure a webhook on your fork:
+- **URL:** `https://your-public-url/webhook/github`
 - **Content type:** `application/json`
 - **Secret:** Same as `GITHUB_WEBHOOK_SECRET` in `.env`
 - **Events:** Select "Issues"
 
-### 4. Create Demo Issues
+Then create an issue with the `shieldops` label — ShieldOps handles the rest.
+
+**Option B: Local Replay (no webhook needed)**
+
+Set `SKIP_SIGNATURE_CHECK=1` in `.env`, then:
 
 ```bash
-# Creates 4 labeled issues that trigger ShieldOps
-python scripts/create_issues.py
-```
-
-### 5. Watch It Work
-
-```bash
-# Check live status
-curl http://localhost:8000/status | python -m json.tool
-
-# Watch the logs
-# (uvicorn output shows session creation, polling, policy decisions)
-```
-
-### 6. Local Replay Testing (no GitHub webhook needed)
-
-```bash
-# Set SKIP_SIGNATURE_CHECK=1 in .env, then:
 curl -X POST http://localhost:8000/webhook/github \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: issues" \
@@ -149,112 +130,117 @@ curl -X POST http://localhost:8000/webhook/github \
   }'
 ```
 
-## How It Works
+**Option C: Dashboard UI**
 
-### Event Flow
+Open `http://localhost:8000` and click any of the demo issue buttons to trigger a session.
 
-1. **Issue Created/Labeled** → GitHub sends webhook to `/webhook/github`
-2. **Signature Verified** → HMAC-SHA256 check (or skip for local testing)
-3. **Triage** → Severity, type, predicted policy route determined from labels/title
-4. **Dedup** → `repo#issue` key prevents double-launches on re-labeling
-5. **Devin Session** → Background task creates session with structured output schema
-6. **Poll** → Every 15s until terminal status (finished/stopped/error/timed_out)
-7. **Policy** → Structured output fed to policy engine → auto-merge / human-review / blocked
-8. **Evidence** → Markdown bundle posted as issue comment
-9. **Labels** → `auto-merge-ready` / `needs-human-review` / `blocked` applied
-10. **Metrics** → DogStatsD + Datadog Events for full observability
+### Endpoints
 
-### The Trust Boundary
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web dashboard — live sessions, metrics, actions |
+| `/health` | GET | Health check (app + Devin API connectivity) |
+| `/status` | GET | Full state: counters, sessions, audit events, live Devin fleet |
+| `/devin/sessions` | GET | List all Devin sessions in the org |
+| `/webhook/github` | POST | GitHub webhook receiver (HMAC-verified) |
+| `/api/simulate` | POST | Trigger demo sessions from the dashboard |
 
-| Tier | When | What Happens |
-|------|------|-------------|
-| 🟢 **Auto-Merge** | Tests pass, no breaking changes, high confidence, patch/minor | PR merges automatically |
-| 🟡 **Human Review** | Major upgrade, breaking changes fixed, sensitive paths | Evidence bundle → 2-minute approval |
-| 🔴 **Block** | Tests fail or confidence too low | Nothing merges. Alert fires. Human loops in. |
+## The Trust Boundary
 
-## Real Results: Apache Superset (500K LOC)
+ShieldOps never auto-merges anything risky. Every Devin session returns a **structured output contract**:
 
-We pointed ShieldOps at [Apache Superset](https://github.com/apache/superset) — 500K lines of Python, 200+ dependencies.
+```json
+{
+  "status": "success",
+  "tests_passed": true,
+  "breaking_changes_detected": true,
+  "confidence": 0.92,
+  "files_touched": ["requirements/base.txt", "superset/views/base.py"],
+  "reachability_assessment": "reachable — used in security-critical paths",
+  "changes_summary": "Upgraded Flask 2.3.3 → 3.1.1, fixed 3 breaking changes"
+}
+```
 
-### The Hero: Flask 2.3.3 → 3.x
+The policy engine (`src/orchestrator/policy.py`) routes each result:
 
-Dependabot opens a PR bumping Flask. Build breaks — breaking imports, changed APIs. PR sits red forever.
+| Decision | When | What Happens |
+|----------|------|-------------|
+| 🟢 **Auto-Merge** | Tests pass, confidence ≥80%, patch/minor, no sensitive paths | PR labeled `auto-merge-ready` |
+| 🟡 **Human Review** | Major upgrade, breaking changes, sensitive paths, or 50-80% confidence | Evidence bundle posted, PR labeled `needs-human-review` |
+| 🔴 **Blocked** | Tests fail, confidence <50%, or Devin errored | Alert fired, nothing merges |
 
-**Devin read the Flask 3.x CHANGELOG, found all version constraints across 5 files, updated `pyproject.toml`, `requirements/base.txt`, `requirements/development.txt`, fixed integration test imports, fixed security dataset tests, and verified no breaking API calls remained.**
+## Real Results: Apache Superset
 
-Result: [**PR #10**](https://github.com/gaurav21/superset/pull/10) — `+11/−12` across 5 files. Clean. Mergeable.
+| PR | What | Decision | Details |
+|----|------|----------|---------|
+| [#10](https://github.com/gaurav21/superset/pull/10) | **Flask 2.3.3 → 3.x** (the hero) | 🟡 Human Review | 5 files, 3 breaking changes handled, 7,700 tests passing |
+| [#18](https://github.com/gaurav21/superset/pull/18) | PyJWT CVE fix | 🟢 Auto-Merged | Full autonomous loop — scan → fix → test → merge |
+| [#9](https://github.com/gaurav21/superset/pull/9) | Paramiko CVE-2026-44405 | 🟢 Auto-Merge Ready | Breaking changes handled cleanly |
+| [#8](https://github.com/gaurav21/superset/pull/8) | Dockerfile hardening | 🟢 Auto-Merge Ready | SHA256 digests, dev-pkg cleanup, healthcheck |
+| [#11](https://github.com/gaurav21/superset/pull/11) | npm audit findings | 🟡 Human Review | Multiple frontend dependency fixes |
+| [#12](https://github.com/gaurav21/superset/pull/12) | Flask EOL (second run) | 🟡 Human Review | Additional Flask remediation |
 
-### All Devin-Authored PRs
+**10 PRs** created across **10 Devin sessions**, **8+ vulnerabilities** remediated.
 
-| PR | What | Changes | Link |
-|----|------|---------|------|
-| **#8** | Dockerfile hardening — SHA256 digests, dev-pkg cleanup, healthcheck | `+20/−4` | [View PR](https://github.com/gaurav21/superset/pull/8) |
-| **#9** | Paramiko CVE-2026-44405 — 3.5.1→5.0.0, breaking changes handled | `+8/−4` | [View PR](https://github.com/gaurav21/superset/pull/9) |
-| **#10** | **Flask 2.3→3.x — major version upgrade across 500K LOC codebase** | `+11/−12` | [View PR](https://github.com/gaurav21/superset/pull/10) |
+## Observability
 
-## Datadog Metrics
+### Without Datadog (always works)
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `shieldops.devin.sessions.created` | Count | Sessions launched |
-| `shieldops.devin.sessions.completed` | Count | Sessions finished |
-| `shieldops.devin.sessions.failed` | Count | Sessions that failed |
-| `shieldops.devin.sessions.active` | Gauge | Currently running |
-| `shieldops.policy.decision` | Count | Policy decisions by type |
-| `shieldops.remediation.confidence` | Gauge | Devin confidence per session |
-| `shieldops.remediation.breaking_changes_handled` | Count | Breaking changes fixed |
-| `shieldops.remediation.reviewer_minutes_saved` | Gauge | Estimated time saved |
-| `shieldops.devin.cost_acu` | Gauge | ACU cost per session |
+- **`/status`** — live counters (active/completed/blocked), session state, policy decisions, audit trail
+- **`/devin/sessions`** — real-time Devin fleet status
+- **Web dashboard** at `/` — clickable metric cards, session tables, audit log
+
+### With Datadog
+
+ShieldOps creates a full observability suite:
+
+- **Dashboard:** "ShieldOps — Agent Trust Control Plane" (6 widget groups)
+- **14 custom metrics:** `shieldops.devin.*`, `shieldops.policy.*`, `shieldops.remediation.*`, `shieldops.vulnerabilities.*`
+- **4 monitors:** failure rate, policy breach, stuck sessions, intervention rate
+- **Events:** full audit trail in Event Explorer (`source:shieldops`)
 
 ## Project Structure
 
 ```
-├── trigger.py                       # 🎯 Event-driven entry point (FastAPI)
+├── trigger.py                  # 🎯 FastAPI entry point — webhook + orchestration
 ├── src/
-│   ├── config.py                    # Environment configuration
+│   ├── config.py               # Environment configuration
 │   ├── orchestrator/
-│   │   ├── devin_client.py          # Devin REST API wrapper
-│   │   ├── session_manager.py       # Session lifecycle + polling
-│   │   ├── triage.py                # Priority scoring engine
-│   │   ├── policy.py                # Auto-merge / review / block boundary
-│   │   └── prompt_builder.py        # Context-aware Devin prompts
-│   ├── reporting/
-│   │   ├── evidence_bundle.py       # 2-minute reviewer approval packet
-│   │   └── github_reporter.py       # Issue/PR comment posting
+│   │   ├── devin_client.py     # Devin REST API wrapper (v3 org-scoped)
+│   │   ├── policy.py           # Trust boundary — auto-merge / review / block
+│   │   ├── prompt_builder.py   # Context-aware prompts + structured output schema
+│   │   ├── session_manager.py  # Session lifecycle + polling
+│   │   └── triage.py           # Severity scoring engine
 │   ├── observability/
-│   │   ├── state.py                 # In-memory state for /status
-│   │   ├── metrics.py               # DogStatsD metric emission
-│   │   ├── events.py                # Datadog event tracking
-│   │   ├── dashboard.py             # Dashboard creation via API
-│   │   └── monitors.py              # Alert + SLO creation
+│   │   ├── state.py            # Persistent state store (/status endpoint)
+│   │   ├── metrics.py          # DogStatsD + HTTP metric emission
+│   │   ├── events.py           # Datadog event tracking
+│   │   ├── dashboard.py        # Programmatic dashboard creation
+│   │   └── monitors.py         # Alerting monitor definitions
+│   ├── reporting/
+│   │   ├── evidence_bundle.py  # 2-minute reviewer approval packet
+│   │   └── github_reporter.py  # Issue/PR comment + label posting
 │   └── scanner/
-│       ├── models.py                # Vulnerability data models
-│       ├── vulnerability_scanner.py # Multi-scanner ingestion
-│       └── issue_creator.py         # GitHub issue creation
+│       ├── models.py           # Vulnerability data models
+│       └── vulnerability_scanner.py
+├── static/
+│   └── dashboard.html          # Web dashboard UI
 ├── scripts/
-│   └── create_issues.py             # Create demo issues with `gh`
+│   └── create_issues.py        # Create demo issues via gh CLI
+├── docs/
+│   └── index.html              # Presentation site (GitHub Pages)
+├── Dockerfile
+├── docker-compose.yml
 ├── requirements.txt
-├── .env.example
-└── README.md
+└── .env.example                # All configuration variables
 ```
-
-## Why Not Just Dependabot?
-
-| | Dependabot | ShieldOps + Devin |
-|---|---|---|
-| Patch/minor bumps | ✅ | ✅ |
-| Breaking-change upgrades | ❌ Opens a red PR, stops | ✅ Fixes call sites, iterates to green |
-| Reads CHANGELOGs | ❌ | ✅ |
-| Reachability analysis | ❌ | ✅ |
-| Policy routing (auto-merge / review / block) | ❌ | ✅ |
-| Evidence bundle for reviewer | ❌ | ✅ |
-| Datadog observability | ❌ | ✅ |
 
 ## Links
 
-- 📊 [Presentation](https://avyay.ai/blog/shieldops-autonomous-security) — Full technical walkthrough
+- 📊 [Presentation](https://gaurav21.github.io/shieldops/) — Architecture, decision tree, results
 - 🐙 [Demo target repo](https://github.com/gaurav21/superset) — Apache Superset fork with all PRs + issues
+- 📝 [Blog post](https://avyay.ai/blog/shieldops-autonomous-security) — Full technical deep-dive
 
 ---
 
-*Built by [Gaurav Sharma](https://github.com/gaurav21) — [Avyay AI](https://avyay.ai)*
+*Built by [Gaurav Sharma](https://github.com/gaurav21)*

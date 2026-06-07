@@ -2,12 +2,13 @@
 __pycache__/
 *.pyc
 .venv/
+venv/
 *.egg-info/
 dist/
 build/
 .pytest_cache/
 
-# Persisted state
+# Persisted state (regenerated at runtime)
 data/
 
 # Strategy/internal docs - keep local
@@ -15,3 +16,7 @@ BRAINSTORM-EXPORT.md
 MASTER-PLAN.md
 V2-BUILD-SPEC.md
 .local-only/
+
+# OS
+.DS_Store
+Thumbs.db

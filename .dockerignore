@@ -1,0 +1,11 @@
+.git
+.env
+.local-only
+__pycache__
+*.pyc
+data/
+docs/
+*.md
+!requirements.txt
+.venv
+venv
