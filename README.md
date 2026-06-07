@@ -6,6 +6,10 @@ ShieldOps orchestrates **autonomous coding agents** to remediate security vulner
 
 **Live demo target:** [Apache Superset](https://github.com/apache/superset) — 500K LOC, 200+ Python dependencies.
 
+### 🎥 [Watch the 5-minute demo](https://www.loom.com/share/ce5d7d5ce927444cad7ddc92cf75c74f)
+
+[![ShieldOps Demo](https://cdn.loom.com/sessions/thumbnails/ce5d7d5ce927444cad7ddc92cf75c74f-with-play.gif)](https://www.loom.com/share/ce5d7d5ce927444cad7ddc92cf75c74f)
+
 ## Quick Start
 
 ### Prerequisites
