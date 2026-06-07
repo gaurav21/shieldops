@@ -770,13 +770,67 @@ async def webhook_github(request: Request):
     }
 
 
+@app.get("/devin/sessions")
+async def devin_sessions(limit: int = 25):
+    """List live Devin sessions directly from the Devin API.
+
+    Shows ALL sessions in the org — not just ones ShieldOps created.
+    """
+    if not _devin_client:
+        raise HTTPException(status_code=503, detail="Devin client not initialized")
+    try:
+        sessions = await _devin_client.list_sessions(limit=limit)
+        return {
+            "count": len(sessions),
+            "sessions": [
+                {
+                    "session_id": s.session_id,
+                    "title": s.title,
+                    "status": s.status,
+                    "url": s.url,
+                    "pull_request_url": s.pull_request_url,
+                    "status_detail": s.status_detail,
+                }
+                for s in sessions
+            ],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Failed to list Devin sessions: {e}")
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 @app.get("/status")
 async def get_status():
     """Live status view — active/completed/blocked counts, session state, audit events.
 
-    This is the 'is it working' view for engineering leaders. Works without Datadog.
+    Also fetches live Devin sessions so the dashboard reflects real state.
     """
-    return state.to_dict()
+    status = state.to_dict()
+
+    # Enrich with live Devin sessions
+    if _devin_client:
+        try:
+            live = await _devin_client.list_sessions(limit=25)
+            running = [s for s in live if s.status in ("running", "blocked")]
+            status["devin_live"] = {
+                "total": len(live),
+                "running": len(running),
+                "sessions": [
+                    {
+                        "session_id": s.session_id,
+                        "title": s.title,
+                        "status": s.status,
+                        "url": s.url,
+                        "pull_request_url": s.pull_request_url,
+                    }
+                    for s in live
+                ],
+            }
+        except Exception as e:
+            status["devin_live"] = {"error": str(e)}
+
+    return status
 
 
 @app.get("/health")

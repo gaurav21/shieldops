@@ -635,6 +635,26 @@ a:hover { text-decoration: underline; }
       </div>
     </div>
 
+    <!-- Devin Live Sessions -->
+    <div class="table-wrap" id="devinLiveWrap">
+      <h2>🤖 Devin Sessions (Live)</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>PR</th>
+              <th>Session</th>
+            </tr>
+          </thead>
+          <tbody id="devinLiveBody">
+            <tr><td colspan="4" class="empty-state">Loading Devin sessions…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Audit Log -->
     <div class="audit-wrap">
       <h2>📋 Audit Log</h2>
@@ -991,6 +1011,39 @@ async function poll() {
     // Update detail panel if open
     if (selectedSession && sessions[selectedSession]) {
       showDetail(selectedSession, sessions[selectedSession]);
+    }
+
+    // Devin Live Sessions
+    const devinLive = data.devin_live || {};
+    const liveSessions = devinLive.sessions || [];
+    const liveBody = document.getElementById('devinLiveBody');
+    if (liveSessions.length === 0) {
+      liveBody.innerHTML = '<tr><td colspan="4" class="empty-state">No Devin sessions found</td></tr>';
+    } else {
+      liveBody.innerHTML = liveSessions.map(s => {
+        const title = (s.title || 'Untitled');
+        const truncTitle = title.length > 50 ? title.substring(0, 50) + '…' : title;
+        const statusCls = s.status === 'running' ? 'running' : s.status === 'suspended' ? 'blocked' : 'completed';
+        const statusIcon = { running: '⏳', suspended: '💤', finished: '✅', stopped: '⏹️', error: '💥', blocked: '🔴', timed_out: '⏰' };
+        const prLink = s.pull_request_url
+          ? '<a href="' + s.pull_request_url + '" target="_blank">PR ↗</a>'
+          : '–';
+        const sessionLink = s.url
+          ? '<a href="' + s.url + '" target="_blank">Open ↗</a>'
+          : '–';
+        return '<tr>' +
+          '<td>' + escHtml(truncTitle) + '</td>' +
+          '<td><span class="status-badge status-' + statusCls + '">' + (statusIcon[s.status] || '⚪') + ' ' + s.status + '</span></td>' +
+          '<td>' + prLink + '</td>' +
+          '<td>' + sessionLink + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // Update Active metric to include live running sessions
+    const liveRunning = devinLive.running || 0;
+    if (liveRunning > 0) {
+      document.getElementById('metActive').textContent = liveRunning;
     }
 
     // Audit log
