@@ -1,16 +1,14 @@
 FROM python:3.12-slim
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install deps in small batches to keep memory usage low
+RUN pip install --no-cache-dir fastapi==0.115.12 python-dotenv==1.1.0
+RUN pip install --no-cache-dir uvicorn[standard]==0.34.3
+RUN pip install --no-cache-dir httpx==0.28.1
+RUN pip install --no-cache-dir pydantic==2.11.4
+RUN pip install --no-cache-dir datadog==0.50.1
+RUN pip install --no-cache-dir PyGithub==2.5.0
 
 # Copy application code
 COPY trigger.py .
@@ -24,8 +22,7 @@ RUN mkdir -p /app/data
 
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 CMD ["uvicorn", "trigger:app", "--host", "0.0.0.0", "--port", "8000"]
