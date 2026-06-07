@@ -371,7 +371,7 @@ async def _process_terminal(issue_key: str, session_id: str, session, triage_res
         issue_key,
         policy_decision=decision_str,
         pr_url=pr_url,
-        error=None if session.status in ("finished", "stopped") else f"Session status: {session.status}",
+        error=None if session.status in ("finished", "stopped", "running", "suspended") or structured else f"Session status: {session.status}",
     )
 
     # Emit metrics
