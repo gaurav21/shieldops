@@ -99,7 +99,8 @@ header h1 span { color: var(--gold); }
   transition: border-color .2s, transform .2s;
 }
 
-.card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.card:hover { border-color: var(--gold); transform: translateY(-2px); cursor: pointer; }
+.card.filter-active { border-color: var(--gold); box-shadow: 0 0 12px rgba(201,162,39,.3); transform: translateY(-2px); }
 .card .value { font-family: var(--font-head); font-size: 2.4rem; font-weight: 700; transition: all .3s; }
 .card .label { color: var(--muted); font-size: .82rem; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
 .card.active .value { color: var(--blue); }
@@ -542,23 +543,23 @@ a:hover { text-decoration: underline; }
 
 <!-- Metric Cards -->
 <div class="metrics">
-  <div class="card active">
+  <div class="card active" onclick="toggleFilter('running')">
     <div class="value" id="metActive">–</div>
     <div class="label">Active Sessions</div>
   </div>
-  <div class="card completed">
+  <div class="card completed" onclick="toggleFilter('completed')">
     <div class="value" id="metCompleted">–</div>
     <div class="label">Completed</div>
   </div>
-  <div class="card blocked">
+  <div class="card blocked" onclick="toggleFilter('blocked')">
     <div class="value" id="metBlocked">–</div>
     <div class="label">Blocked / Failed</div>
   </div>
-  <div class="card prs">
+  <div class="card prs" onclick="toggleFilter('auto_merge_ready')">
     <div class="value" id="metAutoMerge">–</div>
     <div class="label">Auto-Merge Ready</div>
   </div>
-  <div class="card human">
+  <div class="card human" onclick="toggleFilter('human_review')">
     <div class="value" id="metHumanReview">–</div>
     <div class="label">Needs Human</div>
   </div>
@@ -674,6 +675,54 @@ const BASE = window.location.origin;
 let lastEventCount = 0;
 let prevSessionStates = {};  // track state transitions for completion toasts
 let selectedSession = null;
+let activeFilter = null; // current metric card filter
+
+// ── Filter by metric card ──
+function toggleFilter(filterType) {
+  if (activeFilter === filterType) {
+    activeFilter = null; // reset
+  } else {
+    activeFilter = filterType;
+  }
+  // Update card styles
+  document.querySelectorAll('.metrics .card').forEach(c => c.classList.remove('filter-active'));
+  if (activeFilter) {
+    const cardMap = { running: 'active', completed: 'completed', blocked: 'blocked', auto_merge_ready: 'prs', human_review: 'human' };
+    const cls = cardMap[activeFilter];
+    if (cls) document.querySelector('.card.' + cls)?.classList.add('filter-active');
+  }
+  // Update table header to show filter
+  const hdr = document.querySelector('#devinLiveWrap h2');
+  const filterLabels = { running: 'Running', completed: 'Completed', blocked: 'Blocked / Failed', auto_merge_ready: 'Auto-Merge Ready', human_review: 'Needs Human Review' };
+  hdr.textContent = activeFilter ? '🤖 Devin Sessions — ' + (filterLabels[activeFilter] || activeFilter) : '🤖 Devin Sessions (Live)';
+  applyFilter();
+}
+
+function applyFilter() {
+  const rows = document.querySelectorAll('#devinLiveBody tr');
+  if (!activeFilter) {
+    rows.forEach(r => r.style.display = '');
+    return;
+  }
+  rows.forEach(r => {
+    const status = r.getAttribute('data-status') || '';
+    const policy = r.getAttribute('data-policy') || '';
+    let show = false;
+    if (activeFilter === 'running') show = status === 'running';
+    else if (activeFilter === 'completed') show = status === 'finished' || status === 'stopped' || status === 'suspended';
+    else if (activeFilter === 'blocked') show = status === 'error' || status === 'timed_out' || policy === 'blocked';
+    else if (activeFilter === 'auto_merge_ready') show = policy === 'auto_merge_ready' || policy === 'auto-merge-ready';
+    else if (activeFilter === 'human_review') show = policy === 'human_review' || policy === 'needs-human-review';
+    r.style.display = show ? '' : 'none';
+  });
+  // If nothing visible, show a message
+  const visible = Array.from(rows).filter(r => r.style.display !== 'none');
+  if (visible.length === 0) {
+    const tbody = document.getElementById('devinLiveBody');
+    const filterLabels = { running: 'running', completed: 'completed', blocked: 'blocked', auto_merge_ready: 'auto-merge ready', human_review: 'needs human review' };
+    tbody.innerHTML += '<tr class="filter-empty"><td colspan="4" class="empty-state">No sessions matching "' + (filterLabels[activeFilter] || activeFilter) + '"</td></tr>';
+  }
+}
 
 // ── Toast ──
 function toast(msg, type = 'info', icon = '', duration = 5000) {
@@ -1031,7 +1080,9 @@ async function poll() {
         const sessionLink = s.url
           ? '<a href="' + s.url + '" target="_blank">Open ↗</a>'
           : '–';
-        return '<tr>' +
+        // Determine policy from PR labels or title patterns
+        const policyGuess = s.pull_request_url ? (s.title && s.title.includes('CRITICAL') || s.title && s.title.includes('major') ? 'needs-human-review' : 'auto-merge-ready') : '';
+        return '<tr data-status="' + s.status + '" data-policy="' + policyGuess + '">' +
           '<td>' + escHtml(truncTitle) + '</td>' +
           '<td><span class="status-badge status-' + statusCls + '">' + (statusIcon[s.status] || '⚪') + ' ' + s.status + '</span></td>' +
           '<td>' + prLink + '</td>' +
@@ -1045,6 +1096,9 @@ async function poll() {
     if (liveRunning > 0) {
       document.getElementById('metActive').textContent = liveRunning;
     }
+
+    // Re-apply active filter after rendering
+    if (activeFilter) applyFilter();
 
     // Audit log
     const events = data.recent_events || [];
