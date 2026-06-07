@@ -99,6 +99,56 @@ a{color:var(--gold);text-decoration:none}
 .dash-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
 .dash-label{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:6px}
 
+/* Architecture Diagram (detailed) */
+.arch-diagram{max-width:720px;margin:32px auto 0;position:relative}
+.arch-row{display:flex;align-items:center;justify-content:center;gap:0;margin:0}
+.arch-box{background:var(--white);border:2px solid var(--border);border-radius:14px;padding:14px 20px;text-align:center;font-family:'Syne',sans-serif;font-weight:600;font-size:.78rem;position:relative;min-width:260px}
+.arch-box.highlight{border-color:var(--gold);background:var(--gold-tint)}
+.arch-box .arch-detail{font-family:'Outfit',sans-serif;font-weight:400;font-size:.7rem;color:var(--text-2);margin-top:4px;line-height:1.5}
+.arch-connector{display:flex;flex-direction:column;align-items:center;padding:4px 0;color:var(--gold);font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem}
+.arch-connector .conn-label{font-family:'Outfit',sans-serif;font-size:.65rem;color:var(--text-2);font-weight:400}
+.arch-branches{display:flex;justify-content:center;gap:16px;margin-top:8px}
+.arch-branch{text-align:center;border-radius:12px;padding:10px 16px;font-family:'Syne',sans-serif;font-weight:600;font-size:.75rem;min-width:160px}
+.arch-branch.green{background:#E8F5E9;border:2px solid #4CAF50;color:#2E7D32}
+.arch-branch.yellow{background:#FFF8E1;border:2px solid var(--gold);color:#8D6E00}
+.arch-branch.red{background:#FFEBEE;border:2px solid #E53935;color:#C62828}
+.arch-outputs{display:flex;justify-content:center;gap:20px;margin-top:12px}
+.arch-output{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.72rem;color:var(--text-2);font-family:'Outfit',sans-serif}
+@media(max-width:600px){
+  .arch-box{min-width:auto;padding:10px 14px;font-size:.7rem}
+  .arch-branches{flex-direction:column;gap:8px;align-items:center}
+  .arch-branch{min-width:auto;font-size:.68rem}
+  .arch-outputs{flex-direction:column;gap:8px;align-items:center}
+}
+
+/* Decision Tree */
+.dtree{max-width:680px;margin:28px auto 0;text-align:left}
+.dtree-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;margin-bottom:8px;font-family:'Outfit',sans-serif;font-size:.88rem;transition:transform .2s}
+.dtree-row:hover{transform:translateX(4px)}
+.dtree-row .dtree-q{flex:1;color:var(--indigo)}
+.dtree-row .dtree-a{font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;white-space:nowrap}
+.dtree-row.blocked{background:#FFEBEE}.dtree-row.blocked .dtree-a{color:#C62828}
+.dtree-row.review{background:#FFF8E1}.dtree-row.review .dtree-a{color:#8D6E00}
+.dtree-row.auto{background:#E8F5E9}.dtree-row.auto .dtree-a{color:#2E7D32}
+.dtree-icon{font-size:1.2rem;flex-shrink:0}
+
+/* Results hero stats */
+.result-hero{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);padding:28px 32px;text-align:center;margin-top:32px}
+.result-hero .rh-val{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;color:var(--gold)}
+.result-hero .rh-label{font-size:.85rem;color:var(--text-2);margin-top:4px}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px}
+.result-stat{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:20px 12px;text-align:center}
+.result-stat .rs-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--indigo)}
+.result-stat .rs-label{font-size:.72rem;color:var(--text-2);margin-top:4px}
+.result-badges{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.result-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:24px;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500}
+.result-badge.green{background:#E8F5E9;color:#2E7D32}
+.result-badge.yellow{background:#FFF8E1;color:#8D6E00}
+.result-badge.red{background:#FFEBEE;color:#C62828}
+@media(max-width:600px){
+  .result-grid{grid-template-columns:repeat(2,1fr)}
+}
+
 /* Demo placeholder */
 .demo-frame{max-width:700px;margin:32px auto 0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .play-btn{width:64px;height:64px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
@@ -349,14 +399,14 @@ a{color:var(--gold);text-decoration:none}
   <h2 class="title" style="color:var(--white)">What an engineering leader sees</h2>
   <p style="color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:8px">"Is this thing safe to run?"</p>
   <div class="g4" style="margin-top:32px">
-    <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">Sessions Launched</div></div>
-    <div class="dash-card"><div class="dash-val">3</div><div class="dash-label">PRs Delivered</div></div>
+    <div class="dash-card"><div class="dash-val">10</div><div class="dash-label">Sessions Completed</div></div>
+    <div class="dash-card"><div class="dash-val">10</div><div class="dash-label">PRs Created</div></div>
     <div class="dash-card" style="border-color:var(--gold);border-width:2px"><div class="dash-val">✅</div><div class="dash-label">Hero PR Shipped</div></div>
-    <div class="dash-card"><div class="dash-val">7</div><div class="dash-label">Issues Created</div></div>
-    <div class="dash-card"><div class="dash-val">2</div><div class="dash-label">Breaking Changes Handled</div></div>
-    <div class="dash-card"><div class="dash-val">0</div><div class="dash-label">Follow-up Messages</div></div>
-    <div class="dash-card"><div class="dash-val">9</div><div class="dash-label">Files Changed</div></div>
-    <div class="dash-card"><div class="dash-val">&lt;8m</div><div class="dash-label">Time to First PR</div></div>
+    <div class="dash-card"><div class="dash-val">8</div><div class="dash-label">Issues Remediated</div></div>
+    <div class="dash-card"><div class="dash-val">14</div><div class="dash-label">Custom Metrics</div></div>
+    <div class="dash-card"><div class="dash-val">4</div><div class="dash-label">Datadog Monitors</div></div>
+    <div class="dash-card"><div class="dash-val">3 / 3 / 0</div><div class="dash-label">Auto / Review / Blocked</div></div>
+    <div class="dash-card"><div class="dash-val">7,700</div><div class="dash-label">Tests Passing</div></div>
   </div>
 </div>
 </div>
@@ -478,6 +528,91 @@ a{color:var(--gold);text-decoration:none}
 </div>
 </div>
 
+<!-- SLIDE: ARCHITECTURE DIAGRAM (DETAILED) -->
+<div class="slide" data-bg="light">
+<div class="inner center">
+  <p class="label">System Architecture</p>
+  <h2 class="title">Inside the <span class="gold">orchestration</span> pipeline</h2>
+  <div class="arch-diagram">
+    <div class="arch-row"><div class="arch-box">🐙 GitHub Issues <span style="font-size:.65rem;color:var(--text-2)">(labeled "shieldops")</span><div class="arch-detail">webhook POST on issue create/label</div></div></div>
+    <div class="arch-connector">▼<span class="conn-label">webhook POST</span></div>
+    <div class="arch-row"><div class="arch-box highlight">⚙️ ShieldOps Orchestrator <span style="font-size:.65rem">(FastAPI)</span><div class="arch-detail">• HMAC signature verification<br>• Issue triage &amp; severity scoring<br>• Dedup on repo#issue</div></div></div>
+    <div class="arch-connector">▼<span class="conn-label">dispatch session</span></div>
+    <div class="arch-row"><div class="arch-box">🤖 Devin Session <span style="font-size:.65rem;color:var(--text-2)">(autonomous)</span><div class="arch-detail">• Structured output contract<br>• Poll every 15s until terminal</div></div></div>
+    <div class="arch-connector">▼<span class="conn-label">result + evidence</span></div>
+    <div class="arch-row"><div class="arch-box highlight">🛡️ Policy Engine <span style="font-size:.65rem;color:var(--gold)">(Trust Boundary)</span></div></div>
+    <div class="arch-branches">
+      <div class="arch-branch green">🟢 AUTO-MERGE<div style="font-size:.62rem;font-weight:400;margin-top:2px">tests pass, high confidence,<br>patch/minor</div></div>
+      <div class="arch-branch yellow">🟡 HUMAN REVIEW<div style="font-size:.62rem;font-weight:400;margin-top:2px">major upgrade, breaking changes,<br>sensitive paths</div></div>
+      <div class="arch-branch red">🔴 BLOCKED<div style="font-size:.62rem;font-weight:400;margin-top:2px">tests fail,<br>low confidence</div></div>
+    </div>
+    <div class="arch-connector">▼</div>
+    <div class="arch-outputs">
+      <div class="arch-output">📋 Evidence Bundle → GitHub PR + Labels</div>
+      <div class="arch-output">📊 Metrics → Datadog Dashboard</div>
+      <div class="arch-output">📝 Events → Audit Trail</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SLIDE: DECISION TREE / POLICY ENGINE -->
+<div class="slide" data-bg="light">
+<div class="inner center">
+  <p class="label">Policy Engine</p>
+  <h2 class="title">The <span class="gold">decision tree</span> behind every PR</h2>
+  <p class="sub" style="margin:0 auto 8px">Every Devin result passes through this trust boundary before any code merges.</p>
+  <div class="dtree">
+    <div class="dtree-row blocked"><span class="dtree-icon">❌</span><span class="dtree-q">Tests failed?</span><span class="dtree-a">→ 🔴 BLOCKED</span></div>
+    <div class="dtree-row blocked"><span class="dtree-icon">📉</span><span class="dtree-q">Confidence &lt; 50%?</span><span class="dtree-a">→ 🔴 BLOCKED</span></div>
+    <div class="dtree-row blocked"><span class="dtree-icon">⚠️</span><span class="dtree-q">Devin session errored?</span><span class="dtree-a">→ 🔴 BLOCKED</span></div>
+    <div class="dtree-row review"><span class="dtree-icon">📦</span><span class="dtree-q">Major version bump?</span><span class="dtree-a">→ 🟡 HUMAN REVIEW</span></div>
+    <div class="dtree-row review"><span class="dtree-icon">💥</span><span class="dtree-q">Breaking changes detected?</span><span class="dtree-a">→ 🟡 HUMAN REVIEW</span></div>
+    <div class="dtree-row review"><span class="dtree-icon">🔒</span><span class="dtree-q">Sensitive paths touched?</span><span class="dtree-a">→ 🟡 HUMAN REVIEW</span></div>
+    <div class="dtree-row auto"><span class="dtree-icon">✅</span><span class="dtree-q">All checks pass</span><span class="dtree-a">→ 🟢 AUTO-MERGE READY</span></div>
+  </div>
+  <p style="margin-top:24px;font-size:.82rem;color:var(--text-2)">Evaluated top-to-bottom. First match wins. Full audit trail to Datadog.</p>
+</div>
+</div>
+
+<!-- SLIDE: UPDATED RESULTS -->
+<div class="slide dark" data-bg="dark">
+<div class="inner center">
+  <p class="label">Results</p>
+  <h2 class="title" style="color:var(--white)">What ShieldOps has shipped — <span class="gold">so far</span></h2>
+  <div class="result-hero" style="background:rgba(255,255,255,.06);border-color:var(--gold)">
+    <div class="rh-val" style="font-size:1.1rem;color:var(--gold)">🏆 Hero: Flask 2 → 3 major upgrade · 5 files · 7,700 tests passing</div>
+  </div>
+  <div class="result-grid" style="margin-top:24px">
+    <div class="result-stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)">
+      <div class="rs-val" style="color:var(--gold)">10</div>
+      <div class="rs-label" style="color:rgba(255,255,255,.5)">PRs Created (PRs #8–#18)</div>
+    </div>
+    <div class="result-stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)">
+      <div class="rs-val" style="color:var(--gold)">8</div>
+      <div class="rs-label" style="color:rgba(255,255,255,.5)">Issues Remediated</div>
+    </div>
+    <div class="result-stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)">
+      <div class="rs-val" style="color:var(--gold)">10</div>
+      <div class="rs-label" style="color:rgba(255,255,255,.5)">Devin Sessions Completed</div>
+    </div>
+    <div class="result-stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)">
+      <div class="rs-val" style="color:var(--gold)">14</div>
+      <div class="rs-label" style="color:rgba(255,255,255,.5)">Custom Datadog Metrics</div>
+    </div>
+  </div>
+  <div class="result-badges" style="margin-top:24px">
+    <div class="result-badge green">🟢 3 Auto-Merge</div>
+    <div class="result-badge yellow">🟡 3 Human Review</div>
+    <div class="result-badge red">🔴 0 Blocked</div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:24px;margin-top:24px;flex-wrap:wrap">
+    <div style="font-size:.82rem;color:rgba(255,255,255,.5)">⚡ PyJWT upgrade: auto-merged (PR #18)</div>
+    <div style="font-size:.82rem;color:rgba(255,255,255,.5)">📊 4 Datadog monitors · full audit trail</div>
+  </div>
+</div>
+</div>
+
 <!-- SLIDE 11: WHY DEVIN + NEXT -->
 <div class="slide dark" data-bg="dark">
 <div class="inner center">
@@ -518,7 +653,7 @@ a{color:var(--gold);text-decoration:none}
     <a href="https://github.com/gaurav21/superset" target="_blank" class="card gh-card center">
       <div style="font-size:2rem;margin-bottom:8px">🍴</div>
       <h3>Superset Fork</h3>
-      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset — 7 issues, 3 Devin PRs</p>
+      <p style="color:var(--text-2);font-size:.88rem">gaurav21/superset — 8 issues, 10 Devin PRs</p>
     </a>
   </div>
   <p style="margin-top:48px;font-size:.85rem;color:var(--text-2)">Built by <strong>Gaurav Sharma</strong> · Devin AI + Datadog</p>
