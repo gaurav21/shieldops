@@ -122,15 +122,24 @@ class State:
         pr_url: Optional[str] = None,
         error: Optional[str] = None,
     ):
-        """Mark a session as completed and update counters."""
+        """Mark a session as completed and update counters.
+
+        Guards against double-completion: if the session is already in a
+        terminal state (completed/failed/blocked), this is a no-op.
+        """
         with self._lock:
             if issue_key not in self.sessions:
                 return
 
             session = self.sessions[issue_key]
+
+            # Guard: don't re-complete an already-terminal session
+            if session.get("status") in ("completed", "failed", "blocked"):
+                return
+
             session["completed_at"] = datetime.now(timezone.utc).isoformat()
             session["policy_decision"] = policy_decision
-            session["pr_url"] = pr_url
+            session["pr_url"] = pr_url or session.get("pr_url")
             session["error"] = error
 
             self.counters["active"] = max(0, self.counters["active"] - 1)
