@@ -3,7 +3,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install deps in small batches to keep memory usage low
-RUN pip install --no-cache-dir fastapi==0.115.12 python-dotenv==1.1.0
+RUN pip install --no-cache-dir fastapi==0.115.12 python-dotenv==1.2.2
 RUN pip install --no-cache-dir uvicorn[standard]==0.34.3
 RUN pip install --no-cache-dir httpx==0.28.1
 RUN pip install --no-cache-dir pydantic==2.11.4
