@@ -17,13 +17,15 @@ router = APIRouter(prefix="/webhook", tags=["webhooks"])
 # These get set by the app on startup
 _orchestrator = None
 _webhook_secret = None
+_skip_signature_check = False
 
 
-def configure(orchestrator, webhook_secret: str):
+def configure(orchestrator, webhook_secret: str, *, skip_signature_check: bool = False):
     """Configure the webhook handler with dependencies."""
-    global _orchestrator, _webhook_secret
+    global _orchestrator, _webhook_secret, _skip_signature_check
     _orchestrator = orchestrator
     _webhook_secret = webhook_secret
+    _skip_signature_check = skip_signature_check
 
 
 def _verify_signature(payload: bytes, signature: str, secret: str) -> bool:
@@ -55,7 +57,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
     # Verify signature — reject when no secret is configured or signature is invalid
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature-256", "")
-    if not _verify_signature(body, signature, _webhook_secret or ""):
+    if not _skip_signature_check and not _verify_signature(body, signature, _webhook_secret or ""):
         raise HTTPException(status_code=403, detail="Invalid or missing webhook signature")
 
     event_type = request.headers.get("X-GitHub-Event", "")

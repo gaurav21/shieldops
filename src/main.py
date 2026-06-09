@@ -6,6 +6,7 @@ Devin does the judgment-heavy work Dependabot can't. Datadog proves the fleet is
 """
 
 import asyncio
+import hmac
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -381,7 +382,10 @@ async def lifespan(app: FastAPI):
     app.state.orchestrator = orchestrator
     app.state.config = config
 
-    configure_webhooks(orchestrator, config.github.webhook_secret)
+    configure_webhooks(
+        orchestrator, config.github.webhook_secret,
+        skip_signature_check=config.github.skip_signature_check,
+    )
 
     scheduler = ScanScheduler(orchestrator, interval_hours=24)
     app.state.scheduler = scheduler
@@ -425,7 +429,7 @@ async def _require_api_key(
     expected = os.getenv("SHIELDOPS_API_KEY", "")
     if not expected:
         return ""  # no key configured — allow (dev mode)
-    if not api_key or api_key != expected:
+    if not api_key or not hmac.compare_digest(api_key, expected):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
     return api_key
 
