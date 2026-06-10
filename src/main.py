@@ -384,7 +384,7 @@ async def lifespan(app: FastAPI):
 
     configure_webhooks(
         orchestrator, config.github.webhook_secret,
-        skip_signature_check=config.github.skip_signature_check,
+        skip_signature_check=config.skip_signature_check,
     )
 
     scheduler = ScanScheduler(orchestrator, interval_hours=24)
