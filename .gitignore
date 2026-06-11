@@ -17,6 +17,13 @@ MASTER-PLAN.md
 V2-BUILD-SPEC.md
 .local-only/
 
+# Test artifacts
+test_shieldops.db
+*.db
+
 # OS
 .DS_Store
 Thumbs.db
+
+# Node modules (dashboard)
+node_modules/

@@ -1,157 +1,173 @@
-"""Shared fixtures for ShieldOps tests."""
+"""Test fixtures and configuration."""
 
-from __future__ import annotations
-
-from datetime import datetime, timedelta
-
+import asyncio
+import os
 import pytest
+import pytest_asyncio
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-from src.config import Config, DevinConfig, GitHubConfig, DatadogConfig, ScannerConfig
-from src.scanner.models import (
-    Severity,
-    Vulnerability,
-    VulnerabilityType,
-    RemediationStatus,
-    ScanResult,
-)
-from src.orchestrator.triage import TriageDecision
+from src.db.database import Base
+from src.db.models import Organization, Repository, User, UserRole, PlanType
+from trigger import app
+
+# Test database URL
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_shieldops.db"
 
 
-@pytest.fixture
-def sample_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-001",
-        title="Upgrade requests — CVE-2023-0001",
-        description="HTTP request smuggling in requests",
-        severity=Severity.HIGH,
-        vuln_type=VulnerabilityType.PYTHON_DEPENDENCY,
-        package_name="requests",
-        current_version="2.28.0",
-        fixed_version="2.31.0",
-        cve_id="CVE-2023-0001",
-        advisory_url="https://nvd.nist.gov/vuln/detail/CVE-2023-0001",
-        scanner="pip-audit",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture
+async def test_engine():
+    """Create test database engine."""
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+        connect_args={"check_same_thread": False},
     )
+    
+    # Create tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    yield engine
+    
+    # Clean up
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    
+    await engine.dispose()
 
 
-@pytest.fixture
-def critical_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-002",
-        title="RCE in flask",
-        description="Remote code execution",
-        severity=Severity.CRITICAL,
-        vuln_type=VulnerabilityType.PYTHON_DEPENDENCY,
-        package_name="flask",
-        current_version="2.0.0",
-        fixed_version="3.0.0",
-        cve_id="CVE-2024-9999",
-        scanner="pip-audit",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
+@pytest_asyncio.fixture
+async def test_session(test_engine):
+    """Create test database session."""
+    async_session = async_sessionmaker(
+        test_engine, class_=AsyncSession, expire_on_commit=False
     )
+    
+    async with async_session() as session:
+        yield session
 
 
-@pytest.fixture
-def npm_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-003",
-        title="XSS in lodash",
-        description="Cross-site scripting via template injection",
-        severity=Severity.MEDIUM,
-        vuln_type=VulnerabilityType.NPM_DEPENDENCY,
-        package_name="lodash",
-        current_version="4.17.15",
-        fixed_version="4.17.21",
-        scanner="npm-audit",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
+@pytest_asyncio.fixture
+async def test_client():
+    """Create test HTTP client."""
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+
+
+@pytest_asyncio.fixture
+async def test_org(test_session):
+    """Create test organization."""
+    org = Organization(
+        github_org_id=12345,
+        name="Test Organization",
+        slug="test-org",
+        avatar_url="https://example.com/avatar.png",
+        installation_id=67890,
+        plan=PlanType.PRO,
     )
+    test_session.add(org)
+    await test_session.commit()
+    await test_session.refresh(org)
+    return org
 
 
-@pytest.fixture
-def sast_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-004",
-        title="SQL injection in query builder",
-        description="Unsanitized user input in SQL query",
-        severity=Severity.HIGH,
-        vuln_type=VulnerabilityType.SAST,
-        package_name="sql-injection-rule",
-        current_version="N/A",
-        file_path="superset/sql_lab.py",
-        line_number=42,
-        scanner="semgrep",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
+@pytest_asyncio.fixture
+async def test_repo(test_session, test_org):
+    """Create test repository."""
+    repo = Repository(
+        org_id=test_org.id,
+        github_repo_id=11111,
+        full_name="test-org/test-repo",
+        default_branch="main",
+        is_active=True,
     )
+    test_session.add(repo)
+    await test_session.commit()
+    await test_session.refresh(repo)
+    return repo
 
 
-@pytest.fixture
-def container_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-005",
-        title="Trivy: CVE-2024-1234 in openssl",
-        description="Buffer overflow in OpenSSL",
-        severity=Severity.CRITICAL,
-        vuln_type=VulnerabilityType.CONTAINER,
-        package_name="openssl",
-        current_version="3.0.0",
-        fixed_version="3.0.12",
-        cve_id="CVE-2024-1234",
-        scanner="trivy",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
+@pytest_asyncio.fixture
+async def test_user(test_session, test_org):
+    """Create test user."""
+    user = User(
+        github_user_id=22222,
+        login="testuser",
+        email="test@example.com",
+        avatar_url="https://example.com/user.png",
+        role=UserRole.ADMIN,
+        org_id=test_org.id,
     )
+    test_session.add(user)
+    await test_session.commit()
+    await test_session.refresh(user)
+    return user
 
 
 @pytest.fixture
-def low_vuln() -> Vulnerability:
-    return Vulnerability(
-        id="vuln-006",
-        title="Info disclosure in urllib3",
-        description="Minor information disclosure",
-        severity=Severity.LOW,
-        vuln_type=VulnerabilityType.PYTHON_DEPENDENCY,
-        package_name="urllib3",
-        current_version="1.26.0",
-        fixed_version="1.26.18",
-        scanner="pip-audit",
-        discovered_at=datetime(2024, 1, 1, 0, 0, 0),
-    )
+def mock_github_api(monkeypatch):
+    """Mock GitHub API responses."""
+    class MockResponse:
+        def __init__(self, json_data, status_code=200):
+            self.json_data = json_data
+            self.status_code = status_code
+        
+        def json(self):
+            return self.json_data
+        
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise Exception(f"HTTP {self.status_code}")
+    
+    async def mock_request(*args, **kwargs):
+        # Return mock responses based on URL
+        url = args[1] if len(args) > 1 else kwargs.get("url", "")
+        
+        if "installations" in url:
+            return MockResponse([{
+                "id": 67890,
+                "account": {"id": 12345, "login": "test-org"},
+            }])
+        elif "access_tokens" in url:
+            return MockResponse({
+                "token": "test-token",
+                "expires_at": "2024-12-31T23:59:59Z",
+            })
+        elif "user" in url:
+            return MockResponse({
+                "id": 22222,
+                "login": "testuser",
+                "email": "test@example.com",
+                "avatar_url": "https://example.com/user.png",
+            })
+        elif "orgs" in url:
+            return MockResponse([{
+                "id": 12345,
+                "login": "test-org",
+            }])
+        else:
+            return MockResponse({})
+    
+    import httpx
+    monkeypatch.setattr(httpx.AsyncClient, "request", mock_request)
+    monkeypatch.setattr(httpx.AsyncClient, "get", mock_request)
+    monkeypatch.setattr(httpx.AsyncClient, "post", mock_request)
 
 
-@pytest.fixture
-def sample_scan_result(sample_vuln, npm_vuln) -> ScanResult:
-    return ScanResult(
-        scan_id="scan-001",
-        scanner="pip-audit",
-        started_at=datetime(2024, 1, 1, 0, 0, 0),
-        completed_at=datetime(2024, 1, 1, 0, 5, 0),
-        vulnerabilities=[sample_vuln, npm_vuln],
-    )
-
-
-@pytest.fixture
-def sample_triage_decision(sample_vuln) -> TriageDecision:
-    return TriageDecision(
-        vulnerability=sample_vuln,
-        priority_score=75.0,
-        should_remediate=True,
-        reason="test reason",
-        estimated_complexity="simple",
-        reachable=True,
-        predicted_route="auto_merge",
-    )
-
-
-@pytest.fixture
-def default_config() -> Config:
-    return Config()
-
-
-@pytest.fixture
-def github_config() -> GitHubConfig:
-    return GitHubConfig(
-        token="ghp_test_token",
-        repo_owner="testowner",
-        repo_name="testrepo",
-        webhook_secret="test_secret",
-    )
+def pytest_configure():
+    """Configure pytest."""
+    # Set test environment variables
+    os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+    os.environ["JWT_SECRET"] = "test-secret"
+    os.environ["GITHUB_OAUTH_CLIENT_ID"] = "test-client-id"
+    os.environ["GITHUB_OAUTH_CLIENT_SECRET"] = "test-client-secret"

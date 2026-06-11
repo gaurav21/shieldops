@@ -19,7 +19,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+load_dotenv()  # Must run before src imports that read env vars at module level
+
+import httpx
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -43,7 +46,17 @@ from src.observability.metrics import (
     EventEmitter,
 )
 
-load_dotenv()
+# Enterprise backend imports
+from src.db.database import get_db_session, create_tables
+from src.github_app.app_auth import get_github_app_auth
+from src.github_app.installation import handle_github_app_webhook
+from src.github_app.oauth import get_github_oauth
+from src.api.auth import require_auth, get_current_user
+from src.api.repos import router as repos_router
+from src.api.orgs import router as orgs_router
+from src.api.vulnerabilities import router as vulns_router
+from src.api.sessions import router as sessions_router
+from src.api.dashboard import router as dashboard_router
 
 logging.basicConfig(
     level=os.getenv("SHIELDOPS_LOG_LEVEL", "INFO"),
@@ -71,6 +84,8 @@ _semaphore: asyncio.Semaphore | None = None
 _devin_client: DevinClient | None = None
 _event_emitter: EventEmitter | None = None
 _config: Config | None = None
+_github_app_auth = None
+_github_oauth = None
 
 
 # ---------------------------------------------------------------------------
@@ -548,14 +563,39 @@ def _extract_package(title: str) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _semaphore, _devin_client, _event_emitter, _config
+    global _semaphore, _devin_client, _event_emitter, _config, _github_app_auth, _github_oauth
+    
+    # Initialize config and core services
     _config = Config.from_env()
     _devin_client = DevinClient(_config.devin)
     _event_emitter = EventEmitter(_config.datadog)
     _semaphore = asyncio.Semaphore(MAX_CONCURRENT_SESSIONS)
+    
+    # Initialize enterprise backend services
+    _github_app_auth = get_github_app_auth()
+    _github_oauth = get_github_oauth()
+    
+    # Create database tables if needed
+    try:
+        await create_tables()
+        logger.info("📊 Database tables ready")
+    except Exception as e:
+        logger.warning(f"Database initialization failed: {e}")
+    
     logger.info(f"🛡️ ShieldOps trigger started — label={TRIGGER_LABEL}, "
                 f"max_sessions={MAX_CONCURRENT_SESSIONS}, "
                 f"poll_interval={POLL_INTERVAL_SECONDS}s")
+
+    # Resume polling for sessions that were active when we last shut down
+    running = state.get_running_sessions()
+    if running:
+        logger.info(f"🔄 Resuming {len(running)} active session(s) from persisted state")
+        for issue_key, session_data in running.items():
+            sid = session_data.get("session_id")
+            triage = session_data.get("triage", {})
+            if sid:
+                asyncio.create_task(_poll_session(issue_key, sid, triage))
+                logger.info(f"  → Resumed polling for {issue_key} (session {sid})")
 
     # Resume polling for sessions that were active when we last shut down
     running = state.get_running_sessions()
@@ -573,11 +613,29 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="🛡️ ShieldOps Trigger",
-    description="Event-driven webhook orchestrator — GitHub issues → Devin sessions → Policy → Evidence",
-    version="2.1.0",
+    title="🛡️ ShieldOps Enterprise",
+    description="Event-driven webhook orchestrator + Multi-repo enterprise backend — GitHub issues → Devin sessions → Policy → Evidence",
+    version="3.0.0",
     lifespan=lifespan,
+    redirect_slashes=False,
 )
+
+# CORS — allow dashboard origins
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include enterprise API routers
+app.include_router(repos_router)
+app.include_router(orgs_router)
+app.include_router(vulns_router)
+app.include_router(sessions_router)
+app.include_router(dashboard_router)
 
 # Mount static files
 import pathlib as _pathlib
@@ -717,40 +775,51 @@ async def api_create_issues():
 @app.post("/webhook/github")
 async def webhook_github(request: Request):
     """GitHub webhook receiver.
-
-    Verifies HMAC signature, acts on issue events (opened / labeled)
-    when the label matches TRIGGER_LABEL. Returns 200 immediately;
-    Devin session work happens in a background asyncio task.
+    
+    Handles both legacy issue-based webhooks AND new GitHub App installation webhooks.
     """
     body = await request.body()
-
+    
     # Signature verification
     signature = request.headers.get("X-Hub-Signature-256", "")
     if not _verify_signature(body, signature):
         raise HTTPException(status_code=403, detail="Invalid signature")
-
+    
     event_type = request.headers.get("X-GitHub-Event", "")
     if event_type == "ping":
         return {"status": "pong"}
-
+    
+    payload = json.loads(body)
+    
+    # Handle GitHub App installation events
+    if event_type == "installation" and _github_app_auth:
+        try:
+            async with get_db_session() as db:
+                result = await handle_github_app_webhook(payload, _github_app_auth, db)
+                logger.info(f"GitHub App webhook: {result}")
+                return result
+        except Exception as e:
+            logger.error(f"GitHub App webhook error: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    # Handle legacy issue-based webhooks
     if event_type != "issues":
         return {"status": "ignored", "event": event_type}
-
-    payload = json.loads(body)
+    
     action = payload.get("action", "")
     issue = payload.get("issue", {})
     labels = [l["name"] for l in issue.get("labels", [])]
-
+    
     # Only act on opened/labeled with the trigger label
     if action not in ("opened", "labeled"):
         return {"status": "ignored", "action": action}
-
+    
     if TRIGGER_LABEL not in labels:
         return {"status": "ignored", "reason": f"label '{TRIGGER_LABEL}' not found"}
-
+    
     issue_number = issue.get("number", 0)
     logger.info(f"🎯 Webhook triggered: issue #{issue_number} ({action}) — {issue.get('title')}")
-
+    
     # Triage
     triage_result = _triage_issue(issue)
     state.record_event(
@@ -758,10 +827,10 @@ async def webhook_github(request: Request):
         "webhook_received",
         f"action={action}, labels={labels}, triage={triage_result['predicted_route']}",
     )
-
+    
     # Launch Devin session in background — MUST NOT block the webhook
     asyncio.create_task(_launch_session(issue, triage_result))
-
+    
     return {
         "status": "accepted",
         "issue": issue_number,
@@ -846,4 +915,367 @@ async def health():
         "ok": True,
         "devin_api": devin_ok,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# OAuth endpoints for user authentication
+@app.get("/auth/github")
+async def github_oauth_login(redirect_uri: str = "http://localhost:8000/auth/github/callback"):
+    """Redirect to GitHub OAuth authorization."""
+    if not _github_oauth:
+        raise HTTPException(status_code=501, detail="GitHub OAuth not configured")
+    
+    auth_url = _github_oauth.get_authorization_url(redirect_uri)
+    return JSONResponse({"auth_url": auth_url})
+
+
+@app.get("/auth/github/callback")
+async def github_oauth_callback(
+    code: str,
+    redirect_uri: str = "http://localhost:8000/auth/github/callback"
+):
+    """Handle GitHub OAuth callback."""
+    if not _github_oauth:
+        raise HTTPException(status_code=501, detail="GitHub OAuth not configured")
+    
+    try:
+        # Exchange code for token
+        token_data = await _github_oauth.exchange_code_for_token(code, redirect_uri)
+        access_token = token_data.get("access_token")
+        
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Failed to get access token")
+        
+        # Get user info
+        user_data = await _github_oauth.get_user_info(access_token)
+        
+        # Create or update user
+        async with get_db_session() as db:
+            user = await _github_oauth.create_or_update_user(user_data, access_token, db)
+        
+        # Generate JWT session token
+        jwt_token = _github_oauth.generate_jwt_token(user)
+        
+        # Return token (in production, set as HTTP-only cookie)
+        return JSONResponse({
+            "status": "success",
+            "user": {
+                "id": str(user.id),
+                "login": user.login,
+                "email": user.email,
+                "role": user.role.value,
+            },
+            "token": jwt_token,
+        })
+        
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"OAuth callback error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+
+@app.get("/auth/me")
+async def get_current_user_info(current_user = Depends(get_current_user)):
+    """Get current authenticated user info."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    return {
+        "id": str(current_user.id),
+        "login": current_user.login,
+        "email": current_user.email,
+        "role": current_user.role.value,
+        "org_id": str(current_user.org_id),
+        "last_login_at": current_user.last_login_at,
+    }
+
+
+@app.post("/auth/logout")
+async def logout():
+    """Clear session (client should delete token)."""
+    return {"status": "logged_out"}
+
+
+# ── Enterprise: Scan + Remediate with Devin ──
+
+@app.post("/api/repos/{repo_id}/scan/full")
+async def scan_repository(repo_id: str, request: Request):
+    """Scan a repo for vulnerabilities using pip-audit via GitHub API."""
+    from src.db.database import async_session_maker
+    from src.db.models import Repository, Vulnerability, VulnSeverity, VulnStatus
+    from src.api.auth import get_auth_token
+    from src.github_app.oauth import get_github_oauth
+
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not token:
+        raise HTTPException(status_code=401, detail="Auth required")
+
+    # Get repo from DB
+    async with async_session_maker() as db:
+        from sqlalchemy import select as sa_select
+        result = await db.execute(sa_select(Repository).where(Repository.id == repo_id))
+        repo = result.scalars().first()
+        if not repo:
+            raise HTTPException(status_code=404, detail="Repo not found")
+
+        full_name = repo.full_name
+        gh_token = os.getenv("GITHUB_TOKEN", "")
+
+        # Fetch requirements.txt from GitHub
+        vulns_found = []
+        async with httpx.AsyncClient(timeout=30) as client:
+            for dep_file in ["requirements.txt", "requirements/base.txt", "setup.cfg", "pyproject.toml"]:
+                resp = await client.get(
+                    f"https://api.github.com/repos/{full_name}/contents/{dep_file}",
+                    headers={"Authorization": f"token {gh_token}", "Accept": "application/vnd.github.v3.raw"},
+                )
+                if resp.status_code != 200:
+                    continue
+
+                content = resp.text
+                # Parse requirements and check for known vulns using pip-audit API
+                # For now, use osv.dev API for vulnerability checking
+                packages = []
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if not line or line.startswith("#") or line.startswith("-"):
+                        continue
+                    # Parse package==version or package>=version
+                    for sep in ["==", ">=", "<=", "~=", "!="]:
+                        if sep in line:
+                            name, version = line.split(sep, 1)
+                            packages.append({"name": name.strip().lower(), "version": version.strip().split(",")[0].split(";")[0].strip()})
+                            break
+
+                if not packages:
+                    continue
+
+                # Query OSV.dev for vulnerabilities
+                for pkg in packages[:50]:  # Limit to 50 packages
+                    try:
+                        osv_resp = await client.post(
+                            "https://api.osv.dev/v1/query",
+                            json={"package": {"name": pkg["name"], "ecosystem": "PyPI"}, "version": pkg["version"]},
+                            timeout=10,
+                        )
+                        if osv_resp.status_code == 200:
+                            osv_data = osv_resp.json()
+                            for vuln_data in osv_data.get("vulns", [])[:3]:  # Max 3 vulns per package
+                                # Map severity
+                                severity_str = "medium"
+                                for sev in vuln_data.get("severity", []):
+                                    score = sev.get("score", "")
+                                    if "CRITICAL" in str(score).upper() or (isinstance(score, (int, float)) and float(score) >= 9.0):
+                                        severity_str = "critical"
+                                    elif "HIGH" in str(score).upper() or (isinstance(score, (int, float)) and float(score) >= 7.0):
+                                        severity_str = "high"
+                                    elif "LOW" in str(score).upper() or (isinstance(score, (int, float)) and float(score) < 4.0):
+                                        severity_str = "low"
+
+                                # Get fixed version
+                                fixed_version = None
+                                for affected in vuln_data.get("affected", []):
+                                    for r in affected.get("ranges", []):
+                                        for ev in r.get("events", []):
+                                            if "fixed" in ev:
+                                                fixed_version = ev["fixed"]
+
+                                cve_id = None
+                                for alias in vuln_data.get("aliases", []):
+                                    if alias.startswith("CVE-"):
+                                        cve_id = alias
+                                        break
+
+                                vulns_found.append({
+                                    "cve_id": cve_id or vuln_data.get("id", ""),
+                                    "package_name": pkg["name"],
+                                    "current_version": pkg["version"],
+                                    "fixed_version": fixed_version,
+                                    "severity": severity_str,
+                                    "title": vuln_data.get("summary", f"Vulnerability in {pkg['name']}"),
+                                    "description": (vuln_data.get("details", "") or "")[:500],
+                                    "advisory_url": next((r["url"] for r in vuln_data.get("references", []) if r.get("type") == "ADVISORY"), None),
+                                })
+                    except Exception as e:
+                        logger.warning(f"OSV query failed for {pkg['name']}: {e}")
+                        continue
+
+                break  # Only process first found dep file
+
+        # Store vulnerabilities in DB (dedup by cve_id + package)
+        new_count = 0
+        for v in vulns_found:
+            existing = await db.execute(
+                sa_select(Vulnerability).where(
+                    Vulnerability.repo_id == repo.id,
+                    Vulnerability.package_name == v["package_name"],
+                    Vulnerability.cve_id == v["cve_id"],
+                )
+            )
+            if existing.scalars().first():
+                continue
+
+            severity_map = {"low": VulnSeverity.LOW, "medium": VulnSeverity.MEDIUM, "high": VulnSeverity.HIGH, "critical": VulnSeverity.CRITICAL}
+            vuln = Vulnerability(
+                repo_id=repo.id,
+                cve_id=v["cve_id"],
+                package_name=v["package_name"],
+                current_version=v["current_version"],
+                fixed_version=v["fixed_version"],
+                severity=severity_map.get(v["severity"], VulnSeverity.MEDIUM),
+                vuln_type="python_dependency",
+                title=v["title"],
+                description=v["description"] or "No description",
+                status=VulnStatus.DETECTED,
+            )
+            db.add(vuln)
+            new_count += 1
+
+        from datetime import datetime as _dt
+        repo.last_scan_at = _dt.utcnow()
+        await db.commit()
+
+    return {
+        "status": "completed",
+        "repository": full_name,
+        "total_vulns_found": len(vulns_found),
+        "new_vulns": new_count,
+        "packages_scanned": len(packages) if 'packages' in dir() else 0,
+    }
+
+
+@app.post("/api/vulns/{vuln_id}/remediate")
+async def remediate_vulnerability(vuln_id: str, request: Request):
+    """Launch a Devin session to remediate a specific vulnerability."""
+    from src.db.database import async_session_maker
+    from src.db.models import Vulnerability, Repository, RemediationSession, SessionStatus
+
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not token:
+        raise HTTPException(status_code=401, detail="Auth required")
+
+    async with async_session_maker() as db:
+        from sqlalchemy import select as sa_select
+        from sqlalchemy.orm import selectinload
+
+        result = await db.execute(
+            sa_select(Vulnerability)
+            .where(Vulnerability.id == vuln_id)
+            .options(selectinload(Vulnerability.repository))
+        )
+        vuln = result.scalars().first()
+        if not vuln:
+            raise HTTPException(status_code=404, detail="Vulnerability not found")
+
+        repo = vuln.repository
+        full_name = repo.full_name
+
+        # Check if already being remediated
+        existing = await db.execute(
+            sa_select(RemediationSession).where(
+                RemediationSession.vuln_id == vuln.id,
+                RemediationSession.status.in_([SessionStatus.PENDING, SessionStatus.RUNNING]),
+            )
+        )
+        if existing.scalars().first():
+            raise HTTPException(status_code=409, detail="Already being remediated")
+
+        # Build Devin prompt
+        fixed_str = f"to {vuln.fixed_version}" if vuln.fixed_version else "to the latest secure version"
+        prompt = f"""You are a security remediation agent. Fix this vulnerability in {full_name}:
+
+**{vuln.title}**
+- CVE: {vuln.cve_id or 'N/A'}
+- Package: {vuln.package_name} {vuln.current_version or ''}
+- Fix: Upgrade {fixed_str}
+- Severity: {vuln.severity.value}
+
+Repository: https://github.com/{full_name}
+
+Instructions:
+1. Clone the repository
+2. Find where {vuln.package_name} is declared (requirements.txt, setup.py, pyproject.toml, etc.)
+3. Upgrade {vuln.package_name} {fixed_str}
+4. Check for breaking changes in the changelog
+5. Fix any breaking API changes in the codebase
+6. Run tests to verify nothing is broken
+7. Create a pull request with a clear description
+
+{STRUCTURED_OUTPUT_INSTRUCTION}
+"""
+
+        title = f"[ShieldOps] [{vuln.severity.value.upper()}] {vuln.title}"
+
+        # Launch Devin session
+        if not _devin_client:
+            raise HTTPException(status_code=503, detail="Devin client not initialized")
+
+        try:
+            session = await _devin_client.create_session(
+                prompt=prompt,
+                title=title,
+                tags=[f"severity:{vuln.severity.value}", f"package:{vuln.package_name}", "shieldops"],
+                idempotent=True,
+                max_acu_limit=10,
+                structured_output_schema=STRUCTURED_OUTPUT_SCHEMA,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Devin API error: {str(e)}")
+
+        # Store session in DB
+        rem_session = RemediationSession(
+            vuln_id=vuln.id,
+            repo_id=repo.id,
+            agent_type="devin",
+            agent_session_id=session.session_id,
+            status=SessionStatus.RUNNING,
+            prompt=prompt[:2000],
+        )
+        db.add(rem_session)
+
+        # Update vuln status
+        from src.db.models import VulnStatus
+        vuln.status = VulnStatus.REMEDIATING
+        await db.commit()
+        await db.refresh(rem_session)
+
+        # Also register in the legacy state for polling
+        issue_key = f"{full_name}#vuln-{str(vuln.id)[:8]}"
+        triage_result = {
+            "severity": vuln.severity.value,
+            "vuln_type": "python_dependency",
+            "predicted_route": "auto_merge" if vuln.severity.value in ("low", "medium") else "human_review",
+            "should_remediate": True,
+        }
+        state.register_session(
+            issue_key=issue_key,
+            session_id=session.session_id,
+            session_url=session.url,
+            triage=triage_result,
+            issue={"number": 0, "title": vuln.title},
+        )
+
+        # Start background polling
+        import asyncio
+        asyncio.create_task(_poll_session(issue_key, session.session_id, triage_result))
+
+        return {
+            "status": "launched",
+            "session_id": session.session_id,
+            "session_url": session.url,
+            "db_session_id": str(rem_session.id),
+            "vulnerability": vuln.title,
+            "repository": full_name,
+        }
+
+
+@app.get("/api/devin/sessions/live")
+async def get_live_devin_sessions():
+    """Get all active Devin sessions with real-time status."""
+    sessions = state.get_all_sessions()
+    return {
+        "active": state.counters["active"],
+        "completed": state.counters["completed"],
+        "sessions": sessions,
     }

@@ -65,7 +65,7 @@ class TestConfig:
         with patch.dict(os.environ, {}, clear=True):
             cfg = Config.from_env()
         assert cfg.devin.api_key == ""
-        assert cfg.github.repo_owner == "gsharma21"
+        assert cfg.github.repo_owner == "gaurav21"
         assert cfg.github.repo_name == "superset"
         assert cfg.datadog.site == "datadoghq.com"
         assert cfg.port == 8000
@@ -112,4 +112,4 @@ class TestConfig:
         with patch.dict(os.environ, env, clear=True):
             cfg = Config.from_env()
         assert cfg.devin.api_key == "key-only"
-        assert cfg.github.repo_owner == "gsharma21"
+        assert cfg.github.repo_owner == "gaurav21"
