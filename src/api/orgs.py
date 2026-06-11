@@ -1,18 +1,20 @@
 """Organization management API endpoints."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func
 from pydantic import BaseModel
 
 from ..db.database import get_db_session
-from ..db.models import (
-    Organization, Repository, Vulnerability, RemediationSession, 
-    VulnStatus, VulnSeverity, SessionStatus
+from ..db.models import Organization, Repository
+from ..shared.org_metrics import (
+    vulns_by_severity as _vulns_by_severity,
+    compute_fix_rate,
+    count_active_sessions,
+    compute_mttr_hours,
 )
 from .auth import AuthContext, require_viewer_auth, require_admin_auth
 
@@ -78,40 +80,11 @@ async def get_current_organization(
             all_vulns.extend(repo.vulnerabilities)
             all_sessions.extend(repo.remediation_sessions)
     
-    # Vulnerability counts by severity
-    vulns_by_severity = {
-        severity.value: sum(1 for v in all_vulns if v.severity == severity)
-        for severity in VulnSeverity
-    }
-    
-    # Fix rate calculation
     total_vulns = len(all_vulns)
-    if total_vulns > 0:
-        fixed_vulns = sum(
-            1 for v in all_vulns 
-            if v.status in [VulnStatus.FIXED, VulnStatus.IGNORED]
-        )
-        fix_rate = (fixed_vulns / total_vulns) * 100
-    else:
-        fix_rate = 100.0
-    
-    # MTTR calculation (completed sessions only)
-    completed_sessions = [
-        s for s in all_sessions 
-        if s.status == SessionStatus.COMPLETED and s.duration_seconds
-    ]
-    
-    if completed_sessions:
-        avg_duration_seconds = sum(s.duration_seconds for s in completed_sessions) / len(completed_sessions)
-        mttr_hours = avg_duration_seconds / 3600
-    else:
-        mttr_hours = 0.0
-    
-    # Active sessions count
-    active_sessions = sum(
-        1 for s in all_sessions 
-        if s.status in [SessionStatus.PENDING, SessionStatus.RUNNING]
-    )
+    severity_counts = _vulns_by_severity(all_vulns)
+    fix_rate = compute_fix_rate(all_vulns)
+    mttr_hours = compute_mttr_hours(all_sessions)
+    active_sessions = count_active_sessions(all_sessions)
     
     return OrgOverview(
         id=str(org.id),
@@ -121,7 +94,7 @@ async def get_current_organization(
         plan=org.plan.value,
         repo_count=active_repos,
         total_vulns=total_vulns,
-        vulns_by_severity=vulns_by_severity,
+        vulns_by_severity=severity_counts,
         fix_rate=round(fix_rate, 1),
         mttr_hours=round(mttr_hours, 1),
         active_sessions=active_sessions,

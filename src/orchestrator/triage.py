@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Triage engine — scores, prioritizes, checks reachability, and pre-routes policy decisions."""
 
-import asyncio
 import logging
 import os
 from dataclasses import dataclass
@@ -10,6 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 from ..scanner.models import Severity, Vulnerability, VulnerabilityType
+from ..shared.reachability import check_package_reachability, UNREACHABLE_PRIORITY_MULTIPLIER
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ class TriageEngine:
         vuln.reachable = reachable
 
         # Reachability penalty: unreachable vulns get deprioritized heavily
-        reachability_multiplier = 1.0 if reachable is not False else 0.3
+        reachability_multiplier = 1.0 if reachable is not False else UNREACHABLE_PRIORITY_MULTIPLIER
 
         # Weighted total
         priority = (
@@ -138,48 +138,8 @@ class TriageEngine:
         )
 
     def _check_reachability(self, vuln: Vulnerability) -> Optional[bool]:
-        """Cheap reachability heuristic: grep for the package import in the codebase.
-        
-        Returns True if found, False if definitely not used, None if can't determine.
-        This lets us say "we deprioritized 30 CVEs that aren't reachable" — a line
-        every security-aware VP loves.
-        """
-        if vuln.vuln_type not in (VulnerabilityType.PYTHON_DEPENDENCY, VulnerabilityType.NPM_DEPENDENCY):
-            return None  # Can't easily check for non-dependency types
-
-        if not os.path.isdir(self.repo_path):
-            return None  # Repo not cloned yet
-
-        import subprocess
-
-        pkg = vuln.package_name.replace("-", "_").replace("-", "_")
-
-        try:
-            if vuln.vuln_type == VulnerabilityType.PYTHON_DEPENDENCY:
-                # Search for `import pkg` or `from pkg` in Python files
-                result = subprocess.run(
-                    ["grep", "-r", "-l", "--include=*.py",
-                     f"\\(import {pkg}\\|from {pkg}\\)", self.repo_path],
-                    capture_output=True, text=True, timeout=10,
-                )
-                return len(result.stdout.strip()) > 0
-
-            elif vuln.vuln_type == VulnerabilityType.NPM_DEPENDENCY:
-                # Search for require('pkg') or import ... from 'pkg'
-                frontend = os.path.join(self.repo_path, "superset-frontend")
-                search_dir = frontend if os.path.isdir(frontend) else self.repo_path
-                result = subprocess.run(
-                    ["grep", "-r", "-l", "--include=*.ts", "--include=*.tsx",
-                     "--include=*.js", "--include=*.jsx",
-                     vuln.package_name, search_dir],
-                    capture_output=True, text=True, timeout=10,
-                )
-                return len(result.stdout.strip()) > 0
-
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return None
-
-        return None
+        """Delegate to the shared reachability check."""
+        return check_package_reachability(vuln.package_name, vuln.vuln_type, self.repo_path)
 
     def _predict_policy_route(self, vuln: Vulnerability, complexity: str) -> str:
         """Predict the likely policy routing before Devin runs.

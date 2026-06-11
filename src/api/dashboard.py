@@ -11,8 +11,15 @@ from pydantic import BaseModel
 
 from ..db.database import get_db_session
 from ..db.models import (
-    Organization, Repository, Vulnerability, RemediationSession, AuditLog,
-    VulnStatus, VulnSeverity, SessionStatus
+    Organization, Repository, Vulnerability, RemediationSession,
+    SessionStatus
+)
+from ..shared.org_metrics import (
+    vulns_by_severity as _vulns_by_severity,
+    vulns_by_status as _vulns_by_status,
+    compute_fix_rate,
+    count_active_sessions,
+    compute_mttr_hours,
 )
 from .auth import AuthContext, require_viewer_auth
 
@@ -88,50 +95,25 @@ async def get_dashboard_overview(
     total_vulns = len(all_vulns)
     
     # Vulnerability metrics
-    vulns_by_severity = {
-        severity.value: sum(1 for v in all_vulns if v.severity == severity)
-        for severity in VulnSeverity
-    }
-    
-    vulns_by_status = {
-        status.value: sum(1 for v in all_vulns if v.status == status)
-        for status in VulnStatus
-    }
-    
-    # Fix rate calculation
-    if total_vulns > 0:
-        fixed_vulns = vulns_by_status.get(VulnStatus.FIXED.value, 0) + vulns_by_status.get(VulnStatus.IGNORED.value, 0)
-        fix_rate = (fixed_vulns / total_vulns) * 100
-    else:
-        fix_rate = 100.0
-    
+    severity_counts = _vulns_by_severity(all_vulns)
+    status_counts = _vulns_by_status(all_vulns)
+    fix_rate = compute_fix_rate(all_vulns)
+
     # Session metrics
-    active_sessions = sum(
-        1 for s in all_sessions 
-        if s.status in [SessionStatus.PENDING, SessionStatus.RUNNING]
-    )
-    
+    active_sessions = count_active_sessions(all_sessions)
     completed_sessions = sum(
-        1 for s in all_sessions 
+        1 for s in all_sessions
         if s.status == SessionStatus.COMPLETED
     )
-    
-    # MTTR and ACU cost (from completed sessions)
+    mttr_hours = compute_mttr_hours(all_sessions, since=since_date)
+
+    # ACU cost (from completed sessions in time range)
     completed_recent_sessions = [
-        s for s in all_sessions 
-        if (s.status == SessionStatus.COMPLETED and 
-            s.completed_at and s.completed_at >= since_date and
-            s.duration_seconds)
+        s for s in all_sessions
+        if (s.status == SessionStatus.COMPLETED and
+            s.completed_at and s.completed_at >= since_date)
     ]
-    
-    if completed_recent_sessions:
-        avg_duration = sum(s.duration_seconds for s in completed_recent_sessions) / len(completed_recent_sessions)
-        mttr_hours = avg_duration / 3600
-        
-        total_acu_cost = sum(s.acu_cost or 0.0 for s in completed_recent_sessions)
-    else:
-        mttr_hours = 0.0
-        total_acu_cost = 0.0
+    total_acu_cost = sum(s.acu_cost or 0.0 for s in completed_recent_sessions)
     
     # Generate trend data (daily buckets for the requested period)
     trend_data = await _generate_trend_data(auth.org_id, since_date, days, db)
@@ -140,8 +122,8 @@ async def get_dashboard_overview(
         total_repos=total_repos,
         active_repos=active_repo_count,
         total_vulns=total_vulns,
-        vulns_by_severity=vulns_by_severity,
-        vulns_by_status=vulns_by_status,
+        vulns_by_severity=severity_counts,
+        vulns_by_status=status_counts,
         fix_rate=round(fix_rate, 1),
         mttr_hours=round(mttr_hours, 1),
         active_sessions=active_sessions,
