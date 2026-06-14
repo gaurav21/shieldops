@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShieldOps — Learnings & Devin Impact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ivory:#FDFAF4;--white:#FFFFFF;--indigo:#0E1A40;--gold:#C9A227;
+  --gold-hover:#B8911E;--gold-tint:#FDF8E4;
+  --dark:#0A1228;--border:rgba(14,26,64,.10);--text-2:#3D4F6B;
+  --radius:20px;--btn-radius:16px;
+  --slide-transition:.6s cubic-bezier(.4,0,.2,1);
+  --green:#2E7D32;--green-bg:#E8F5E9;
+  --yellow:#8D6E00;--yellow-bg:#FFF8E1;
+  --red:#C62828;--red-bg:#FFEBEE;
+  --blue:#1565C0;--blue-bg:#E3F2FD;
+}
+html{font-size:18px;scroll-behavior:auto;overflow:hidden;height:100%}
+body{font-family:'Outfit',sans-serif;background:var(--ivory);color:var(--indigo);font-weight:400;line-height:1.6;overflow:hidden;height:100%}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;line-height:1.15;letter-spacing:-.03em}
+a{color:var(--gold);text-decoration:none}
+a:hover{color:var(--gold-hover)}
+
+/* ===== PRESENTATION ENGINE ===== */
+.deck{height:100vh;width:100vw;position:relative}
+.slide{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:60px 80px;
+  opacity:0;transform:translateY(40px);
+  pointer-events:none;
+  transition:opacity var(--slide-transition),transform var(--slide-transition);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.slide.active{opacity:1;transform:translateY(0);pointer-events:auto;z-index:2}
+.slide.exit-up{opacity:0;transform:translateY(-40px)}
+.slide.dark{background:var(--dark);color:var(--white)}
+.slide.dark .label{color:var(--gold)}
+.slide.dark .sub{color:rgba(255,255,255,.6)}
+.slide.dark .text-2{color:rgba(255,255,255,.5)}
+
+.inner{max-width:1100px;width:100%}
+.center{text-align:center}
+.label{font-family:'Syne',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;margin-bottom:16px}
+.sub{font-size:1rem;color:var(--text-2);max-width:640px;line-height:1.7}
+.gold{color:var(--gold)}
+
+/* Cards */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:28px 22px;transition:border-color .3s}
+.card:hover{border-color:var(--gold)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.card p{color:var(--text-2);font-size:.85rem;line-height:1.65}
+.card.dark-card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+.card.dark-card h3{color:var(--white)}
+.card.dark-card p{color:rgba(255,255,255,.55)}
+
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:32px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:32px}
+@media(max-width:900px){.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){
+  .slide{padding:32px 20px;align-items:flex-start;padding-top:48px}
+  .g3,.g2{grid-template-columns:1fr!important}
+  .g4{grid-template-columns:repeat(2,1fr)!important}
+  .title{font-size:1.5rem!important}
+  .metric-grid{grid-template-columns:repeat(2,1fr)!important}
+  .vs-grid{grid-template-columns:1fr!important}
+}
+
+/* Num badge */
+.num{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--gold);margin-bottom:6px}
+
+/* Tag/badge */
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:600;font-family:'Syne',sans-serif;margin-right:6px;margin-bottom:4px}
+.tag.green{background:var(--green-bg);color:var(--green)}
+.tag.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.tag.red{background:var(--red-bg);color:var(--red)}
+.tag.blue{background:var(--blue-bg);color:var(--blue)}
+.tag.gold{background:var(--gold-tint);color:var(--gold)}
+
+/* Quote */
+.quote{font-family:'Syne',sans-serif;font-size:clamp(1.1rem,2.2vw,1.5rem);font-weight:600;line-height:1.45;max-width:800px;margin:0 auto 20px;color:var(--white)}
+
+/* Metric grid */
+.metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:28px}
+.metric-box{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 10px;text-align:center}
+.metric-box.dark-metric{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+.metric-val{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--gold);line-height:1}
+.metric-label{font-size:.7rem;color:var(--text-2);margin-top:6px;line-height:1.3}
+.dark .metric-label{color:rgba(255,255,255,.45)}
+
+/* VS comparison */
+.vs-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-top:28px}
+.vs-col{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px}
+.vs-col.highlight{border-color:var(--gold);border-width:2px;background:var(--gold-tint)}
+.vs-col h3{font-size:.95rem;margin-bottom:10px}
+.vs-col ul{list-style:none;padding:0}
+.vs-col ul li{padding:5px 0;font-size:.82rem;color:var(--text-2)}
+.vs-col ul li::before{content:'→ ';color:var(--gold);font-weight:600}
+.vs-badge{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold)}
+
+/* Table */
+.slide-table{width:100%;border-collapse:collapse;margin-top:24px;font-size:.82rem}
+.slide-table th{font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--gold);text-align:left;padding:10px 12px;border-bottom:2px solid var(--gold)}
+.slide-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:top}
+.slide-table tr:hover{background:var(--gold-tint)}
+
+/* Timeline */
+.timeline{margin-top:28px;position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--gold)}
+.tl-item{position:relative;margin-bottom:20px;padding-left:20px}
+.tl-item::before{content:'';position:absolute;left:-21px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid var(--ivory)}
+.tl-item h4{font-size:.9rem;font-weight:700;margin-bottom:2px}
+.tl-item p{font-size:.82rem;color:var(--text-2);line-height:1.5}
+
+/* Callout */
+.callout{margin-top:32px;font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold)}
+
+/* Links bar */
+.link-bar{position:fixed;top:16px;right:24px;z-index:100;display:flex;gap:10px}
+.link-bar a{
+  font-family:'Syne',sans-serif;font-size:.7rem;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+  padding:6px 14px;border-radius:20px;
+  background:rgba(14,26,64,.06);border:1px solid var(--border);
+  color:var(--indigo);transition:all .2s;
+}
+.link-bar a:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
+.link-bar.on-dark a{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.7)}
+
+/* ===== PROGRESS BAR ===== */
+.progress{position:fixed;top:0;left:0;height:3px;background:var(--gold);z-index:100;transition:width .4s ease}
+
+/* ===== SLIDE COUNTER ===== */
+.counter{
+  position:fixed;bottom:28px;right:36px;
+  font-family:'Syne',sans-serif;font-size:.8rem;font-weight:600;
+  color:var(--text-2);z-index:100;transition:color .3s;
+}
+.counter.on-dark{color:rgba(255,255,255,.4)}
+
+/* ===== NAV BUTTONS ===== */
+.nav-btn{
+  position:fixed;z-index:100;width:48px;height:48px;
+  border-radius:50%;background:rgba(14,26,64,.08);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:1.1rem;color:var(--indigo);transition:all .2s;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.nav-btn:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
+.nav-btn:active{transform:scale(.92)}
+.nav-btn.on-dark{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.6)}
+.nav-btn.on-dark:hover{background:var(--gold);color:var(--white)}
+#navPrev{bottom:28px;left:36px}
+#navNext{bottom:28px;left:96px}
+.nav-btn.disabled{opacity:.25;pointer-events:none}
+
+.nav-hint{
+  position:fixed;bottom:28px;left:160px;
+  font-family:'Outfit',sans-serif;font-size:.72rem;
+  color:var(--text-2);z-index:100;opacity:.5;transition:color .3s;
+}
+.nav-hint.on-dark{color:rgba(255,255,255,.3)}
+.nav-hint kbd{
+  display:inline-block;padding:2px 7px;border:1px solid var(--border);
+  border-radius:4px;font-size:.7rem;margin:0 2px;background:var(--white);
+}
+.nav-hint.on-dark kbd{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+@media(max-width:600px){.nav-hint{display:none}}
+
+@media(prefers-reduced-motion:reduce){.slide,.progress{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="counter" id="counter"></div>
+<div class="nav-btn" id="navPrev" onclick="window._goPrev&&window._goPrev()">←</div>
+<div class="nav-btn" id="navNext" onclick="window._goNext&&window._goNext()">→</div>
+<div class="nav-hint" id="navhint"><kbd>←</kbd><kbd>→</kbd> to navigate</div>
+<div class="link-bar" id="linkbar"><a href="index.html">← Main Deck</a></div>
+
+<div class="deck" id="deck">
+
+<!-- ==================== SLIDE 0: TITLE ==================== -->
+<div class="slide active" data-bg="light">
+<div class="inner center">
+  <p class="label">Learnings & Reflection</p>
+  <h1 style="font-size:clamp(2.6rem,6vw,4.5rem);font-weight:800;letter-spacing:-2px">Shield<span class="gold">Ops</span></h1>
+  <p style="font-size:clamp(.95rem,1.8vw,1.25rem);font-weight:500;margin-top:12px">What I Built, What I Learned, and Why <span class="gold">Devin</span> Changes Everything</p>
+  <p style="font-size:.85rem;color:var(--text-2);margin-top:40px">Gaurav Sharma · Pre-Sales Engineer Candidate · Cognition AI</p>
+  <p style="font-size:.75rem;color:var(--text-2);margin-top:6px">Built in ~1 week · 10 Devin sessions · 10 PRs on Apache Superset (500K LOC)</p>
+</div>
+</div>
+
+<!-- ==================== SLIDE 1: WHAT I BUILT ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Context</p>
+  <h2 class="title">What I Built</h2>
+  <p class="sub">An autonomous security remediation platform — not a scanner, not a dashboard — a <strong>trust control plane</strong> that takes vulnerabilities from "detected" to "PR ready" without human intervention.</p>
+  <div class="g3" style="margin-top:28px">
+    <div class="card">
+      <div class="num">🎯</div>
+      <h3>Target</h3>
+      <p>Apache Superset — 500K LOC, 200+ Python dependencies. Not a toy repo.</p>
+    </div>
+    <div class="card">
+      <div class="num">⚙️</div>
+      <h3>Stack</h3>
+      <p>FastAPI orchestrator + Devin API (v3) + Datadog observability + GitHub webhooks</p>
+    </div>
+    <div class="card">
+      <div class="num">📦</div>
+      <h3>Output</h3>
+      <p>10 PRs across 10 Devin sessions. 8+ vulns remediated. 1 PR auto-merged itself.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 2: KEY METRICS ==================== -->
+<div class="slide dark" data-bg="dark">
+<div class="inner center">
+  <p class="label">By The Numbers</p>
+  <h2 class="title" style="color:var(--white)">Real Results, Real Code</h2>
+  <div class="metric-grid" style="margin-top:36px">
+    <div class="metric-box dark-metric">
+      <div class="metric-val">10</div>
+      <div class="metric-label">Devin Sessions</div>
+    </div>
+    <div class="metric-box dark-metric">
+      <div class="metric-val">10</div>
+      <div class="metric-label">PRs Created</div>
+    </div>
+    <div class="metric-box dark-metric">
+      <div class="metric-val">8+</div>
+      <div class="metric-label">Vulns Fixed</div>
+    </div>
+    <div class="metric-box dark-metric">
+      <div class="metric-val">0</div>
+      <div class="metric-label">Follow-Up Messages</div>
+    </div>
+    <div class="metric-box dark-metric">
+      <div class="metric-val">7,700</div>
+      <div class="metric-label">Tests Passing (Hero PR)</div>
+    </div>
+  </div>
+  <p style="margin-top:28px;font-size:.85rem;color:rgba(255,255,255,.45)">Every session ran fully autonomously. Every PR is publicly verifiable on GitHub.</p>
+</div>
+</div>
+
+<!-- ==================== SLIDE 3: WHAT WENT WELL ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Wins</p>
+  <h2 class="title">What Went <span class="gold">Well</span></h2>
+  <div class="g2">
+    <div class="card" style="border-left:4px solid var(--gold)">
+      <h3>🔌 Devin as API Primitive</h3>
+      <p>Treated Devin as a backend service, not a chat tool. Programmatic session creation, structured output contracts, polling-based lifecycle. This unlocks enterprise automation use cases that IDE tools can never touch.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold)">
+      <h3>🚀 End-to-End Execution</h3>
+      <p>Flask 2→3 in 500K LOC: Devin read the changelog, found 3 breaking changes, fixed 5 files, iterated until 7,700 tests passed. No other tool does this — Dependabot bumps and walks away.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold)">
+      <h3>🛡️ Trust Boundary Pattern</h3>
+      <p>Built a policy engine that routes every Devin output: auto-merge, human review, or blocked. Addresses the #1 enterprise objection: "We can't let AI merge code unsupervised."</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--gold)">
+      <h3>📊 Observability from Day 1</h3>
+      <p>14 Datadog metrics, 4 monitors, full audit trail. When a VP of Engineering sees the dashboard, they believe. Observability is the closer.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 4: MORE WINS ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Wins (continued)</p>
+  <h2 class="title">More Things That <span class="gold">Worked</span></h2>
+  <div class="g3">
+    <div class="card">
+      <div class="num">🎯</div>
+      <h3>Real-World Target</h3>
+      <p>Testing against Apache Superset — not a toy repo — gave results credibility. Every PR is publicly visible and verifiable on GitHub.</p>
+    </div>
+    <div class="card">
+      <div class="num">⚡</div>
+      <h3>Speed of Build</h3>
+      <p>Full platform in ~1 week: orchestrator, policy engine, dashboard, Datadog integration, Docker, presentation, blog, and enterprise backend (~25K LOC).</p>
+    </div>
+    <div class="card">
+      <div class="num">🏢</div>
+      <h3>Enterprise Thinking</h3>
+      <p>Didn't stop at "it works." Built multi-tenant DB, GitHub App, OAuth SSO, role-based API. The enterprise readiness that customers ask about in every POC.</p>
+    </div>
+  </div>
+  <p class="callout center">Structured output contracts made integration surprisingly smooth</p>
+</div>
+</div>
+
+<!-- ==================== SLIDE 5: WHAT COULD BE BETTER ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Honest Assessment</p>
+  <h2 class="title">What Could Have Been <span class="gold">Better</span></h2>
+  <div class="g2">
+    <div class="card" style="border-left:4px solid var(--red)">
+      <h3>📉 Metrics Data Gap</h3>
+      <p>Events emitted correctly but metric data points had issues — DogStatsD connection refused locally. Empty dashboard widgets. <strong>Lesson:</strong> Validate the full metrics pipeline end-to-end on Day 1.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red)">
+      <h3>🔄 Webhook Dedup Race</h3>
+      <p>Simultaneous `opened` + `labeled` events created 3 sessions for one issue. Wasted Devin ACUs. <strong>Lesson:</strong> Build idempotency before the first real run.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red)">
+      <h3>🐛 Polling Bug</h3>
+      <p>Successful sessions marked as "failed" — polling didn't handle intermediate states correctly. Made metrics look worse than reality. <strong>Lesson:</strong> Test happy path with real sessions, not mocks.</p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--red)">
+      <h3>🎯 Demo Focus</h3>
+      <p>Initial demo showed ShieldOps results but didn't showcase <strong>Devin itself</strong>. For Cognition pre-sales, should lead with the product, then show what's built on top.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 6: THE KILLER INSIGHT ==================== -->
+<div class="slide dark" data-bg="dark">
+<div class="inner center">
+  <p class="label">The Biggest Learning</p>
+  <p class="quote">"Devin isn't a coding assistant.<br>It's an <span class="gold">autonomous execution engine</span><br>that happens to write code."</p>
+  <p style="font-size:.9rem;color:rgba(255,255,255,.5);max-width:700px;margin:24px auto 0;line-height:1.7">The moment I stopped thinking of Devin as "AI that writes code" and started treating it as "an API that executes complex engineering tasks," everything clicked. ShieldOps isn't a Devin demo — it's proof that Devin is an enterprise integration primitive.</p>
+</div>
+</div>
+
+<!-- ==================== SLIDE 7: DEVIN CAPABILITIES PROVEN ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Proven By ShieldOps</p>
+  <h2 class="title">What Makes Devin <span class="gold">Different</span></h2>
+  <table class="slide-table">
+    <thead>
+      <tr><th>Capability</th><th>What I Saw</th><th>Pre-Sales Angle</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>End-to-End Execution</strong></td>
+        <td>Flask 2→3: read changelog, fixed 3 breaking changes, 5 files, 7,700 tests green</td>
+        <td><span class="tag green">Show the PR diff</span></td>
+      </tr>
+      <tr>
+        <td><strong>Structured Output</strong></td>
+        <td>Machine-readable JSON from every session — tests, confidence, files touched</td>
+        <td><span class="tag blue">API primitive, not chatbot</span></td>
+      </tr>
+      <tr>
+        <td><strong>Self-Verification</strong></td>
+        <td>Runs tests, iterates on failures, only outputs when green</td>
+        <td><span class="tag green">Trust boundary works</span></td>
+      </tr>
+      <tr>
+        <td><strong>Unlimited Parallelism</strong></td>
+        <td>10 sessions, 10 PRs, fully independent</td>
+        <td><span class="tag gold">500 sessions? No problem</span></td>
+      </tr>
+      <tr>
+        <td><strong>Breaking Change Handling</strong></td>
+        <td>Paramiko GSSAPI removal, Flask API changes — handled automatically</td>
+        <td><span class="tag yellow">What Dependabot can't do</span></td>
+      </tr>
+      <tr>
+        <td><strong>Auto-Merge</strong></td>
+        <td>PR #18: scan → fix → test → merge. Zero humans.</td>
+        <td><span class="tag green">Full autonomous loop</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- ==================== SLIDE 8: COMPETITIVE POSITIONING ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Competitive Insight</p>
+  <h2 class="title">Devin vs. The <span class="gold">Alternatives</span></h2>
+  <div class="vs-grid">
+    <div class="vs-col">
+      <h3>🤖 Dependabot</h3>
+      <ul>
+        <li>Bumps version numbers</li>
+        <li>Build breaks → walks away</li>
+        <li>Engineer spends 4+ hours</li>
+        <li>~40% of PRs merge clean</li>
+        <li>No changelog awareness</li>
+      </ul>
+    </div>
+    <div class="vs-badge">vs.</div>
+    <div class="vs-col highlight">
+      <h3>⚡ Devin</h3>
+      <ul>
+        <li>Reads changelog + migration guide</li>
+        <li>Fixes breaking call sites</li>
+        <li>Iterates until tests green</li>
+        <li>Structured output for automation</li>
+        <li>Full codebase context</li>
+      </ul>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:20px">
+    <div class="card" style="text-align:center">
+      <h3 style="color:var(--text-2)">Copilot / Cursor</h3>
+      <p>Suggests code <strong>line-by-line</strong> while human types. IDE-bound. Can't run autonomously.</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <h3 style="color:var(--text-2)">Generic AI Chatbots</h3>
+      <p>"Here's what you <em>should</em> do." Suggestions, not execution. No verification.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 9: ENTERPRISE VALUE ==================== -->
+<div class="slide dark" data-bg="dark">
+<div class="inner center">
+  <p class="label">Enterprise Impact</p>
+  <h2 class="title" style="color:var(--white)">The Value Story for <span class="gold">Engineering Leaders</span></h2>
+  <div class="g3" style="margin-top:32px">
+    <div class="card dark-card">
+      <div class="metric-val" style="font-size:2.4rem">60→0</div>
+      <h3 style="margin-top:10px">Days MTTR</h3>
+      <p>Industry average for critical CVE: 60-90 days. ShieldOps + Devin: minutes to hours.</p>
+    </div>
+    <div class="card dark-card">
+      <div class="metric-val" style="font-size:2.4rem">8h→0</div>
+      <h3 style="margin-top:10px">Engineer Hours / CVE</h3>
+      <p>Manual remediation: 2-8 hours per CVE. Devin: fully automated with human review in 2 min.</p>
+    </div>
+    <div class="card dark-card">
+      <div class="metric-val" style="font-size:2.4rem">∞</div>
+      <h3 style="margin-top:10px">Parallelism</h3>
+      <p>50 CVEs × 10 repos = 500 Devin sessions. All running simultaneously. Fleet-wide remediation.</p>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:20px">
+    <div class="card dark-card" style="text-align:center">
+      <h3>📋 Audit & Compliance</h3>
+      <p>Every decision logged. Every session tracked. Evidence bundles for reviewers. Full compliance story.</p>
+    </div>
+    <div class="card dark-card" style="text-align:center">
+      <h3>🛡️ Governance Built-In</h3>
+      <p>Policy engine ensures humans stay in the loop where it matters. Auto-merge only when safe.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 10: PRE-SALES FIT ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Why This Matters</p>
+  <h2 class="title">Pre-Sales <span class="gold">Relevance</span></h2>
+  <div class="g2">
+    <div>
+      <div class="timeline">
+        <div class="tl-item">
+          <h4>Technical Depth</h4>
+          <p>Built a production system on Devin's API. Understand the API, failure modes, edge cases — not from docs, but from building.</p>
+        </div>
+        <div class="tl-item">
+          <h4>Sales Engineering Mindset</h4>
+          <p>Every architecture decision = a customer objection handled. Trust boundary → "Can't let AI merge." Datadog → "How do I monitor?"</p>
+        </div>
+        <div class="tl-item">
+          <h4>Competitive Fluency</h4>
+          <p>Deeply understand where Devin wins vs. Dependabot, Copilot, and chatbots — from building against real problems, not reading marketing.</p>
+        </div>
+        <div class="tl-item">
+          <h4>Demo Craft</h4>
+          <p>Presentation site, Loom video, blog post, architecture diagrams. The full pre-sales toolkit — built and shipped.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="border:2px solid var(--gold);background:var(--gold-tint)">
+        <h3 style="font-size:1.1rem">🎯 The Core Insight</h3>
+        <p style="font-size:.9rem;color:var(--indigo);margin-top:10px;line-height:1.7">
+          The pre-sales conversation isn't <em>"try Devin in your IDE."</em>
+          <br><br>
+          It's <strong>"connect Devin to your pipeline and watch your MTTR drop from months to minutes."</strong>
+          <br><br>
+          ShieldOps proves that positioning. Every PR, every metric, every policy decision is evidence.
+        </p>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>🏢 Enterprise Readiness</h3>
+        <p>Didn't stop at "it works." Built multi-tenant DB, GitHub App, OAuth SSO, role-based API — the questions every enterprise POC asks.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 11: IF I DID IT AGAIN ==================== -->
+<div class="slide" data-bg="light">
+<div class="inner">
+  <p class="label">Retrospective</p>
+  <h2 class="title">If I Did It <span class="gold">Again</span></h2>
+  <div class="g3">
+    <div class="card">
+      <div class="num">01</div>
+      <h3>Lead with Devin</h3>
+      <p>Show the product first — a live Devin session working through the Flask upgrade — then the platform built on top. Product first, integration second.</p>
+    </div>
+    <div class="card">
+      <div class="num">02</div>
+      <h3>Validate Metrics Day 1</h3>
+      <p>Don't assume events and metrics pipelines work the same. Test the full observability stack end-to-end before the first real run.</p>
+    </div>
+    <div class="card">
+      <div class="num">03</div>
+      <h3>Build Idempotency First</h3>
+      <p>Deduplication and idempotency before the first webhook. Wasted ACUs on duplicate sessions — an avoidable cost.</p>
+    </div>
+    <div class="card">
+      <div class="num">04</div>
+      <h3>Record a Live Session</h3>
+      <p>A real-time recording of Devin working through a complex upgrade would be the single most powerful demo asset.</p>
+    </div>
+    <div class="card">
+      <div class="num">05</div>
+      <h3>Multi-Repo Parallelism</h3>
+      <p>Demo parallelism across repos, not just parallel sessions on one repo. That's the enterprise scale story.</p>
+    </div>
+    <div class="card">
+      <div class="num">06</div>
+      <h3>Dogfood Recursively</h3>
+      <p>Use ShieldOps to scan and fix ShieldOps itself. Recursive validation is the demo moment customers remember.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SLIDE 12: CLOSING ==================== -->
+<div class="slide dark" data-bg="dark">
+<div class="inner center">
+  <p class="label">The Takeaway</p>
+  <p class="quote" style="font-size:clamp(1.3rem,2.8vw,1.9rem)">"Zero follow-up messages across 10 sessions.<br><span class="gold">That's the product-market fit.</span>"</p>
+  <p style="font-size:.92rem;color:rgba(255,255,255,.5);max-width:700px;margin:24px auto 0;line-height:1.7">Devin isn't a better autocomplete. It's an autonomous execution engine that fits into enterprise workflows via API. ShieldOps proves it — every PR, every policy decision, every metric.</p>
+  <div style="margin-top:48px">
+    <p style="font-size:1rem;color:var(--white);font-family:'Syne',sans-serif;font-weight:700">Gaurav Sharma</p>
+    <p style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:4px">
+      <a href="https://github.com/gaurav21/shieldops" style="color:var(--gold)">github.com/gaurav21/shieldops</a>
+      &nbsp;·&nbsp;
+      <a href="index.html" style="color:var(--gold)">Main Presentation →</a>
+    </p>
+  </div>
+</div>
+</div>
+
+</div><!-- /deck -->
+
+<script>
+(function(){
+  const slides=document.querySelectorAll('.slide');
+  const total=slides.length;
+  let cur=0;
+  const progress=document.getElementById('progress');
+  const counter=document.getElementById('counter');
+  const prevBtn=document.getElementById('navPrev');
+  const nextBtn=document.getElementById('navNext');
+  const hint=document.getElementById('navhint');
+  const linkbar=document.getElementById('linkbar');
+
+  function go(n){
+    if(n<0||n>=total||n===cur)return;
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add(n>cur?'exit-up':'');
+    setTimeout(()=>{slides.forEach(s=>{s.classList.remove('exit-up')})},600);
+    cur=n;
+    slides[cur].classList.add('active');
+    update();
+  }
+
+  function update(){
+    progress.style.width=((cur/(total-1))*100)+'%';
+    counter.textContent=(cur+1)+' / '+total;
+    const dark=slides[cur].dataset.bg==='dark';
+    counter.className='counter'+(dark?' on-dark':'');
+    prevBtn.className='nav-btn'+(dark?' on-dark':'')+(cur===0?' disabled':'');
+    nextBtn.className='nav-btn'+(dark?' on-dark':'')+(cur===total-1?' disabled':'');
+    hint.className='nav-hint'+(dark?' on-dark':'');
+    linkbar.className='link-bar'+(dark?' on-dark':'');
+  }
+
+  window._goNext=function(){go(cur+1)};
+  window._goPrev=function(){go(cur-1)};
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(cur+1)}
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(cur-1)}
+    if(e.key==='Home'){e.preventDefault();go(0)}
+    if(e.key==='End'){e.preventDefault();go(total-1)}
+  });
+
+  let tx=0,ty=0;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',function(e){
+    const dx=e.changedTouches[0].clientX-tx;
+    const dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){dx<0?go(cur+1):go(cur-1)}
+    else if(Math.abs(dy)>50){dy<0?go(cur+1):go(cur-1)}
+  },{passive:true});
+
+  // hash support
+  const h=parseInt(location.hash.replace('#',''),10);
+  if(h>=0&&h<total){slides[0].classList.remove('active');cur=h;slides[cur].classList.add('active')}
+  update();
+})();
+</script>
+</body>
+</html>

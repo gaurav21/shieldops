@@ -251,6 +251,7 @@ ShieldOps creates a full observability suite:
 ## Links
 
 - 📊 [Presentation](https://gaurav21.github.io/shieldops/) — Architecture, decision tree, results
+- 💡 [Learnings & Devin Impact](https://gaurav21.github.io/shieldops/learnings.html) — What went well, what could be better, Devin capabilities
 - 🐙 [Demo target repo](https://github.com/gaurav21/superset) — Apache Superset fork with all PRs + issues
 - 📝 [Blog post](https://avyay.ai/blog/shieldops-autonomous-security) — Full technical deep-dive
 
