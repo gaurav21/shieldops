@@ -602,14 +602,14 @@ a:hover{color:var(--gold-hover)}
     counter.textContent=(cur+1)+' / '+total;
     const dark=slides[cur].dataset.bg==='dark';
     counter.className='counter'+(dark?' on-dark':'');
-    prevBtn.className='nav-btn'+(dark?' on-dark':'')+(cur===0?' disabled':'');
+    prevBtn.className='nav-btn'+(dark?' on-dark':'');
     nextBtn.className='nav-btn'+(dark?' on-dark':'')+(cur===total-1?' disabled':'');
     hint.className='nav-hint'+(dark?' on-dark':'');
     linkbar.className='link-bar'+(dark?' on-dark':'');
   }
 
   window._goNext=function(){go(cur+1)};
-  window._goPrev=function(){go(cur-1)};
+  window._goPrev=function(){if(cur===0){window.location.href='index.html'}else{go(cur-1)}};
 
   document.addEventListener('keydown',function(e){
     if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){e.preventDefault();go(cur+1)}
