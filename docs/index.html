@@ -686,7 +686,7 @@ a{color:var(--gold);text-decoration:none}
     s.style.pointerEvents='';
   }
 
-  function go(n){
+  function go(n,fromPop){
     if(animating||n<0||n>=total||n===current)return;
     animating=true;
     var dir=n>current?1:-1;
@@ -711,6 +711,7 @@ a{color:var(--gold);text-decoration:none}
     next.style.pointerEvents='auto';
 
     current=n;
+    if(!fromPop) history.pushState({slide:current},'',' #'+current);
     updateUI();
 
     setTimeout(function(){
@@ -782,7 +783,15 @@ a{color:var(--gold);text-decoration:none}
   window._goNext=function(){go(current+1)};
   window._goPrev=function(){go(current-1)};
 
+  // History back/forward
+  window.addEventListener('popstate',function(e){
+    if(e.state&&typeof e.state.slide==='number') go(e.state.slide,true);
+  });
+
   // Init
+  var initHash=parseInt(location.hash.replace('#',''),10);
+  if(initHash>=0&&initHash<total){slides[0].classList.remove('active');current=initHash;slides[current].classList.add('active')}
+  history.replaceState({slide:current},'',' #'+current);
   updateUI();
 
   // Reduced motion

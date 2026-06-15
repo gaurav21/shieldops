@@ -582,15 +582,20 @@ a:hover{color:var(--gold-hover)}
   const hint=document.getElementById('navhint');
   const linkbar=document.getElementById('linkbar');
 
-  function go(n){
+  function go(n,fromPop){
     if(n<0||n>=total||n===cur)return;
     slides[cur].classList.remove('active');
     slides[cur].classList.add(n>cur?'exit-up':'');
     setTimeout(()=>{slides.forEach(s=>{s.classList.remove('exit-up')})},600);
     cur=n;
     slides[cur].classList.add('active');
+    if(!fromPop) history.pushState({slide:cur},'',' #'+cur);
     update();
   }
+
+  window.addEventListener('popstate',function(e){
+    if(e.state&&typeof e.state.slide==='number') go(e.state.slide,true);
+  });
 
   function update(){
     progress.style.width=((cur/(total-1))*100)+'%';
@@ -625,6 +630,7 @@ a:hover{color:var(--gold-hover)}
   // hash support
   const h=parseInt(location.hash.replace('#',''),10);
   if(h>=0&&h<total){slides[0].classList.remove('active');cur=h;slides[cur].classList.add('active')}
+  history.replaceState({slide:cur},'',' #'+cur);
   update();
 })();
 </script>
