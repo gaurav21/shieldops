@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Indosat Ooredoo Hutchison — Present Past Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0A0E15; --ink-2:#0E1420; --panel:#131A27; --panel-2:#18212F;
+    --line:#243245; --line-soft:#1A2433;
+    --text:#E8EEF5; --muted:#8A99AC; --faint:#5C6B7E;
+    --violet:#8B5CF6; --violet-2:#A78BFA; --cyan:#22D3EE; --green:#34D399; --amber:#FBBF24; --rose:#FB7185;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--ink); color:var(--text); font-family:var(--body); -webkit-font-smoothing:antialiased; overflow:hidden;}
+  .bg{position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(circle at 1px 1px, rgba(138,153,172,.08) 1px, transparent 0); background-size:40px 40px;}
+  .bg::after{content:""; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139,92,246,.10), transparent 60%);}
+
+  .deck{position:relative; z-index:1; height:100vh; width:100vw}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:clamp(28px,5vw,90px); padding-bottom:72px; opacity:0;}
+  .slide.active{display:flex; animation:fade .5s ease both}
+  @keyframes fade{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  .slide.active .rise{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+  .slide.active .rise:nth-child(2){animation-delay:.05s}
+  .slide.active .rise:nth-child(3){animation-delay:.10s}
+  .slide.active .rise:nth-child(4){animation-delay:.15s}
+  @keyframes rise{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none}}
+
+  .eyebrow{font-family:var(--mono); font-size:clamp(11px,1.1vw,13px); letter-spacing:.22em; text-transform:uppercase; color:var(--violet-2); display:flex; align-items:center; gap:10px; margin-bottom:22px}
+  .eyebrow::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 4px rgba(34,211,238,.15)}
+  h1{font-family:var(--disp); font-weight:600; line-height:1.02; letter-spacing:-.02em; font-size:clamp(36px,7vw,88px)}
+  h2{font-family:var(--disp); font-weight:600; line-height:1.05; letter-spacing:-.015em; font-size:clamp(26px,4.4vw,52px); margin-bottom:8px}
+  .lede{color:var(--muted); font-size:clamp(15px,1.7vw,21px); line-height:1.5; max-width:54ch}
+  .kicker{font-family:var(--mono); color:var(--faint); font-size:13px; letter-spacing:.04em}
+  .accent{color:var(--violet-2)} .cy{color:var(--cyan)} .gr{color:var(--green)} .am{color:var(--amber)}
+  mark{background:linear-gradient(transparent 60%, rgba(139,92,246,.35) 0); color:inherit}
+
+  .head{margin-bottom:clamp(20px,3vw,40px)}
+  .body{flex:1; min-height:0}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:18px; margin-top:8px}
+  .stat{border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:20px 22px}
+  .stat .n{font-family:var(--disp); font-size:clamp(26px,3.4vw,40px); font-weight:600; letter-spacing:-.02em}
+  .stat .l{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:6px; letter-spacing:.04em}
+  .estate{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px}
+  .chip{font-family:var(--mono); font-size:12.5px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:7px 13px; background:var(--ink-2)}
+  .chip b{color:var(--cyan); font-weight:500}
+
+  .cards{display:grid; gap:16px}
+  .cards.c2{grid-template-columns:repeat(2,1fr)} .cards.c3{grid-template-columns:repeat(3,1fr)}
+  .card{border:1px solid var(--line); background:var(--panel); border-radius:14px; padding:22px 24px}
+  .card h3{font-family:var(--disp); font-weight:600; font-size:18px; margin-bottom:8px; letter-spacing:-.01em}
+  .card p{color:var(--muted); font-size:14.5px; line-height:1.55}
+  .card .tag{font-family:var(--mono); font-size:11px; color:var(--violet-2); letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:10px}
+  .card.hot{border-color:rgba(139,92,246,.45); box-shadow:0 0 0 1px rgba(139,92,246,.12), 0 18px 50px -30px rgba(139,92,246,.6)}
+
+  ul.clean{list-style:none; display:grid; gap:13px}
+  ul.clean li{display:flex; gap:13px; align-items:flex-start; color:var(--text); font-size:clamp(15px,1.6vw,18px); line-height:1.45}
+  ul.clean li::before{content:""; flex:none; width:7px; height:7px; margin-top:9px; border-radius:2px; background:var(--violet); transform:rotate(45deg)}
+  ul.clean li span{color:var(--muted)}
+
+  .role-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:26px; align-items:start}
+  .raci{display:grid; gap:10px}
+  .raci .r{display:flex; justify-content:space-between; align-items:center; border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:14px 18px}
+  .raci .who{font-family:var(--disp); font-weight:600} .raci .what{font-family:var(--mono); font-size:12px; color:var(--muted)}
+  .pill{font-family:var(--mono); font-size:12px; font-weight:700; padding:3px 9px; border-radius:6px}
+  .pill.R{color:var(--cyan); background:rgba(34,211,238,.12)}
+  .pill.C{color:var(--violet-2); background:rgba(139,92,246,.14)}
+  .pill.A{color:var(--amber); background:rgba(251,191,36,.12)}
+
+  .layers{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:6px}
+  .layer{border:1px solid var(--line); border-radius:14px; padding:24px; background:var(--panel); position:relative; overflow:hidden}
+  .layer .num{font-family:var(--mono); font-size:13px; color:var(--faint)}
+  .layer h3{font-family:var(--disp); font-size:20px; margin:14px 0 10px}
+  .layer p{color:var(--muted); font-size:14px; line-height:1.5}
+  .layer .bar{position:absolute; left:0; top:0; height:3px; width:100%; background:linear-gradient(90deg,var(--violet),var(--cyan))}
+  .layer.spot{border-color:rgba(139,92,246,.5)}
+
+  .gaps{display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+  .gap{border:1px solid var(--line); border-left:3px solid var(--rose); background:var(--panel); border-radius:10px; padding:16px 20px}
+  .gap h4{font-family:var(--disp); font-size:16px; margin-bottom:5px}
+  .gap p{color:var(--muted); font-size:13.5px; line-height:1.5}
+  .gap p code{font-family:var(--mono); color:var(--amber); font-size:12.5px}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+  .give,.gain{border:1px solid var(--line); border-radius:14px; padding:24px}
+  .give{background:var(--panel)} .gain{background:linear-gradient(180deg, rgba(52,211,153,.06), var(--panel)); border-color:rgba(52,211,153,.35)}
+  .give .t,.gain .t{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin-bottom:14px}
+  .give .t{color:var(--faint)} .gain .t{color:var(--green)}
+
+  .loop{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:4px}
+  .node{position:relative; border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:16px 16px 18px}
+  .node .s{font-family:var(--mono); font-size:12px; color:var(--violet-2); font-weight:700}
+  .node h4{font-family:var(--disp); font-size:15.5px; margin:8px 0 7px; line-height:1.15}
+  .node p{color:var(--muted); font-size:12.5px; line-height:1.45}
+  .node code{font-family:var(--mono); font-size:11.5px; color:var(--cyan); background:var(--ink-2); padding:2px 6px; border-radius:5px; display:inline-block; margin-top:8px}
+  .node.bits{border-color:rgba(139,92,246,.5); box-shadow:0 0 0 1px rgba(139,92,246,.12)}
+  .node .arrow{position:absolute; right:-12px; top:50%; transform:translateY(-50%); color:var(--faint); font-size:18px; z-index:2}
+  .node:nth-child(4n) .arrow{display:none}
+  .return{margin-top:16px; border:1px dashed rgba(52,211,153,.5); border-radius:10px; padding:13px 18px; display:flex; align-items:center; gap:14px; background:rgba(52,211,153,.04)}
+  .return .ic{color:var(--green); font-family:var(--mono); font-size:16px}
+  .return p{font-size:13.5px; color:var(--muted)} .return code{font-family:var(--mono); color:var(--green); font-size:12.5px}
+
+  .flow{display:flex; align-items:stretch; gap:0; margin-top:6px; flex-wrap:wrap}
+  .step{flex:1; min-width:130px; border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:15px 16px; position:relative}
+  .step+.step{margin-left:26px}
+  .step+.step::before{content:"→"; position:absolute; left:-21px; top:50%; transform:translateY(-50%); color:var(--faint)}
+  .step .k{font-family:var(--mono); font-size:11px; color:var(--violet-2); letter-spacing:.1em; text-transform:uppercase}
+  .step h4{font-family:var(--disp); font-size:15px; margin:7px 0 5px}
+  .step p{color:var(--muted); font-size:12.5px; line-height:1.4}
+  .step.gate{border-color:rgba(251,191,36,.5)} .step.gate .k{color:var(--amber)}
+
+  .hooks{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:10px}
+  .hook{border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:18px 20px}
+  .hook .q{font-family:var(--mono); font-size:11px; color:var(--violet-2); letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px}
+  .hook p{font-size:14.5px; color:var(--text); line-height:1.4}
+
+  .title-meta{margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:18px}
+  .sig{font-family:var(--disp); font-weight:600; font-size:19px}
+  .sig span{display:block; font-family:var(--mono); font-size:12px; color:var(--muted); font-weight:400; margin-top:4px; letter-spacing:.03em}
+  .thesis{font-family:var(--mono); font-size:13px; color:var(--faint); text-align:right; line-height:1.7}
+  .thesis b{color:var(--cyan); font-weight:500}
+
+  .chrome{position:fixed; left:0; right:0; bottom:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:0 clamp(28px,5vw,90px) 20px; pointer-events:none}
+  .counter{font-family:var(--mono); font-size:12px; color:var(--faint); letter-spacing:.1em}
+  .counter b{color:var(--text); font-weight:500}
+  .hint{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.08em}
+  .progress{position:fixed; left:0; bottom:0; height:2px; background:linear-gradient(90deg,var(--violet),var(--cyan)); z-index:6; transition:width .4s ease}
+  .label-top{position:fixed; top:clamp(20px,3vw,34px); right:clamp(28px,5vw,90px); z-index:5; font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.16em; text-transform:uppercase}
+ .link-bar{position:fixed;top:clamp(20px,3vw,34px);left:clamp(28px,5vw,90px);z-index:10;display:flex;gap:10px}
+ .link-bar a{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 14px;text-decoration:none;background:var(--panel);transition:all .25s;letter-spacing:.04em}
+ .link-bar a:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(34,211,238,.08)}
+
+  @media (max-width:860px){
+    .layers,.split,.gaps,.role-grid{grid-template-columns:1fr}
+    .loop{grid-template-columns:repeat(2,1fr)} .node:nth-child(4n) .arrow{display:block} .node:nth-child(2n) .arrow{display:none}
+    .cards.c2,.cards.c3{grid-template-columns:1fr}
+    .step+.step{margin-left:0; margin-top:24px} .step+.step::before{content:"↓"; left:50%; top:-19px; transform:translateX(-50%)}
+    h1{font-size:clamp(34px,11vw,56px)}
+  }
+  @media (prefers-reduced-motion:reduce){ .slide.active,.slide.active .rise{animation:none!important} }
+  :focus-visible{outline:2px solid var(--cyan); outline-offset:3px}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="link-bar"><a href="index.html">← ShieldOps</a><a href="learnings.html">Learnings</a></div>
+<div class="label-top">Datadog × IOH · Field Engagement</div>
+<div class="deck" id="deck">
+
+  <!-- 0 TITLE -->
+  <section class="slide active">
+    <div class="eyebrow rise">Present Past Work</div>
+    <h1 class="rise">From blind<br/>to closed-loop.</h1>
+    <p class="lede rise" style="margin-top:26px">Indosat Ooredoo Hutchison — full-stack observability and embedded DevSecOps across a $6B telco merger, and the autonomous-remediation architecture decision at the centre of it.</p>
+    <div class="title-meta rise">
+      <div class="sig">Gaurav Sharma<span>Datadog · technical lead &amp; executive sponsor</span></div>
+      <div class="thesis">95M subscribers · hybrid estate<br/><b>Q4 2024 → Q2 2026</b></div>
+    </div>
+  </section>
+
+  <!-- 1 AT A GLANCE -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">The customer</div><h2 class="rise">Two telcos, one entity, hybrid everywhere</h2></div>
+    <div class="body rise">
+      <div class="stats">
+        <div class="stat"><div class="n">#2</div><div class="l">telco in Indonesia</div></div>
+        <div class="stat"><div class="n">95M</div><div class="l">mobile subscribers</div></div>
+        <div class="stat"><div class="n">$6B</div><div class="l">Indosat × Tri merger</div></div>
+        <div class="stat"><div class="n am">AI Tech Co.</div><div class="l">stated ambition</div></div>
+      </div>
+      <div class="estate">
+        <span class="chip">estate: <b>on-prem DC</b></span><span class="chip"><b>Kubernetes</b></span>
+        <span class="chip"><b>VMs</b></span><span class="chip"><b>AWS</b></span><span class="chip"><b>GCP</b></span><span class="chip"><b>Azure</b></span>
+        <span class="chip">goal: <b>AIOps · automated remediation · closed-loop ops</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 MY ROLE -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">My role</div><h2 class="rise">I owned the strategy and the architecture</h2></div>
+    <div class="body rise">
+      <div class="role-grid">
+        <ul class="clean">
+          <li>Datadog-side <mark>technical lead &amp; executive sponsor</mark> for a flagship, post-merger account.</li>
+          <li>Owned: the win strategy, the solution architecture, the <span>CIO relationship</span>, and the <mark>RCA architecture decision</mark> at the centre of this talk.</li>
+          <li>Partner consultants (MII) and IOH managed services executed the hands-on instrumentation.</li>
+          <li><span>The decisions and the architecture were mine; the delivery team executed them.</span></li>
+        </ul>
+        <div class="raci">
+          <div class="r"><span class="who">MII <span class="what">partner</span></span><span class="pill R">R · executes</span></div>
+          <div class="r"><span class="who">Datadog <span class="what">me</span></span><span class="pill C">C · architects</span></div>
+          <div class="r"><span class="who">IOH <span class="what">customer</span></span><span class="pill A">A · adopts</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 PROBLEM -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">The problem</div><h2 class="rise">Not a tooling sale — an adoption &amp; architecture problem</h2></div>
+    <div class="body rise">
+      <div class="cards c3">
+        <div class="card"><span class="tag">Operational</span><h3>Reactive, blind</h3><p>Disparate infra / APM / RUM tools, no telemetry correlation. Major incidents found <em>after</em> impact, not before.</p></div>
+        <div class="card"><span class="tag">Commercial</span><h3>Sev1/2 = revenue</h3><p>Outages carry direct revenue and reputational cost at 95M-subscriber scale.</p></div>
+        <div class="card"><span class="tag">Organisational</span><h3>Hands-off ops</h3><p>Operations outsourced to Managed Services, delivered through a partner + subcontractor web. Adoption is the hard part.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 LAYERS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">How I'll walk it</div><h2 class="rise">Three layers</h2></div>
+    <div class="body rise">
+      <div class="layers">
+        <div class="layer"><div class="bar"></div><div class="num">01</div><h3>Enterprise complexity</h3><p>Navigating a merger, a CIO, a partner/subcontractor web, and a 3-year adoption ramp.</p></div>
+        <div class="layer spot"><div class="bar"></div><div class="num">02</div><h3>The architecture decision</h3><p>Build a custom RCA agent — or not? The build-vs-buy call for autonomous diagnosis.</p></div>
+        <div class="layer"><div class="bar"></div><div class="num">03</div><h3>Closed-loop autonomy</h3><p>Detect → diagnose → decide → remediate → verify → close, with governance.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 THE DECISION -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Centerpiece · the decision</div><h2 class="rise">"Should we build a custom RCA agent?"</h2></div>
+    <div class="body rise">
+      <p class="lede" style="margin-bottom:24px">For the IOH Catalyst, the original design proposed a <mark>five-agent architecture</mark> with a custom-built RCA agent at its core:</p>
+      <div class="card hot" style="max-width:760px">
+        <span class="tag">Proposed design</span>
+        <p style="font-size:16px; color:var(--text); line-height:1.6">Take a <span class="accent">general-purpose LLM</span> → give it Datadog access via <span class="cy">MCP tool calls</span> → query metrics, logs, traces → reason to a root cause <span class="am">in 45 seconds</span>.</p>
+        <p style="margin-top:14px; color:var(--muted)">The intent was right. The implementation had real gaps.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 GAPS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Why I challenged it</div><h2 class="rise">Five gaps a demo would hide and production would expose</h2></div>
+    <div class="body rise">
+      <div class="gaps">
+        <div class="gap"><h4>Not trained for RCA</h4><p>A general model can't tell a root cause from a correlated symptom, and has no knowledge of IOH topology. Every investigation starts from zero.</p></div>
+        <div class="gap"><h4>No way to know if it's right</h4><p>No eval dataset, no accuracy target, no wrong-answer detection. A <em>confident wrong</em> diagnosis sends engineers down the wrong path.</p></div>
+        <div class="gap"><h4>RAG ≠ reasoning</h4><p>Retrieving a similar past incident tells you what happened — not <em>why</em> this one is happening, or whether the pattern even applies.</p></div>
+        <div class="gap"><h4>The 45s claim was unbenchmarked</h4><p>An assumption presented as a spec. No test behind it.</p></div>
+        <div class="gap" style="grid-column:1/-1; border-left-color:var(--amber)"><h4>Build cost dwarfs the estimate</h4><p>Datadog's RCA model <code>Toto</code> was trained on <span class="am">1T+ observability datapoints</span> at <span class="am">~$750K</span> compute, through thousands of structured evals. One enterprise on a programme timeline can't close that gap.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 DECISION + TRADEOFF -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">The call</div><h2 class="rise">Don't build the agent. Build the system around one.</h2></div>
+    <div class="body rise">
+      <p class="lede" style="margin-bottom:22px">Use a <mark>purpose-built investigation capability</mark> (Bits AI SRE) for diagnosis — and redirect the team's effort to what genuinely needed building for IOH: the <span class="cy">pipeline · integration · governance · feedback loop</span>.</p>
+      <div class="split">
+        <div class="give"><div class="t">Traded away</div><ul class="clean">
+          <li>"We built our own agent"</li><li>Full control of the RCA component</li></ul></div>
+        <div class="gain"><div class="t">Gained</div><ul class="clean">
+          <li>Accuracy from <span class="gr">day one</span> — validated model</li>
+          <li>A 45s target that's <span class="gr">testable</span>, not assumed</li>
+          <li>A predictable live demo</li>
+          <li>A more credible TM Forum submission</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 CLOSED LOOP (SIGNATURE) -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Signature · closed-loop autonomy</div><h2 class="rise">Detect → diagnose → decide → verify → close</h2></div>
+    <div class="body rise">
+      <div class="loop">
+        <div class="node"><div class="s">01</div><h4>Datadog detects</h4><p>Event Mgmt correlates &amp; dedupes before egress → one enriched payload.</p><code>HTTPS 443 · outbound</code><span class="arrow">→</span></div>
+        <div class="node"><div class="s">02</div><h4>ServiceNow ticket</h4><p>Field-mapped: CRITICAL→P1, service→CMDB.</p><code>u_datadog_monitor_id</code><span class="arrow">→</span></div>
+        <div class="node bits"><div class="s">03</div><h4>Bits AI SRE invoked</h4><p>Business Rule fires; passes sys_id.</p><code>POST /investigations</code><span class="arrow">→</span></div>
+        <div class="node bits"><div class="s">04</div><h4>Root cause</h4><p>Native signal access; reasons across metrics/logs/traces/Watchdog. &lt;1 min.</p><span class="arrow">→</span></div>
+        <div class="node"><div class="s">05</div><h4>Finding written back</h4><p>DD Workflow posts a structured work note.</p><code>PATCH …/incident/{sys_id}</code><span class="arrow">→</span></div>
+        <div class="node"><div class="s">06</div><h4>Validate + remediate</h4><p>Auto (pre-approved actions) or human; confirm recovery in window.</p><span class="arrow">→</span></div>
+        <div class="node"><div class="s">07</div><h4>Alert closed</h4><p>Resolve fires a rule that closes the Datadog alert.</p><code>in sync</code><span class="arrow">→</span></div>
+        <div class="node" style="border-style:dashed; opacity:.85"><div class="s gr">↺</div><h4>Structured learning</h4><p>Outcome feeds back → tunes accuracy on IOH's environment.</p></div>
+      </div>
+      <div class="return"><span class="ic">↩</span><p>Loop closes two ways: <code>sys_id</code> routes the finding to the exact ticket · <code>u_datadog_monitor_id</code> closes the exact alert. <span class="gr">No human required to close.</span></p></div>
+    </div>
+  </section>
+
+  <!-- 9 DEVSECOPS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Deployment architecture</div><h2 class="rise">Security woven into the SDLC, not bolted on</h2></div>
+    <div class="body rise">
+      <div class="flow">
+        <div class="step"><div class="k">commit</div><h4>Push code</h4><p>GitLab build · DD IDE plugin.</p></div>
+        <div class="step"><div class="k">scan</div><h4>SAST + SCA</h4><p>Static analysis on the pipeline.</p></div>
+        <div class="step gate"><div class="k">policy gate</div><h4>Build / stop</h4><p>Breaks the pipeline on critical findings.</p></div>
+        <div class="step"><div class="k">runtime</div><h4>Deploy + RASP</h4><p>IAST/SCA telemetry correlated to RASP.</p></div>
+        <div class="step"><div class="k">close</div><h4>ServiceNow</h4><p>Vulnerabilities open tickets automatically.</p></div>
+      </div>
+      <p class="kicker" style="margin-top:26px">Hybrid collection — DD Agent v7+ · K8s Cluster Agent + DaemonSet · APM tracers · RUM · Synthetics · OTLP/OTel · cloud-native integrations · optional Private Agent Gateway (TCP 10516) for air-gapped traffic.</p>
+    </div>
+  </section>
+
+  <!-- 10 DEPLOYMENT TRADEOFFS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Decisions &amp; trade-offs</div><h2 class="rise">The honest calls under real constraints</h2></div>
+    <div class="body rise">
+      <div class="cards c3">
+        <div class="card"><span class="tag">Instrumentation</span><h3>COTS you don't own</h3><p>OTel where exposed; binaries you can't touch (Siebel); agents hidden in app UIs (Tibco). <em>Triage by instrumentability up front; scope honestly.</em></p></div>
+        <div class="card"><span class="tag">Performance</span><h3>Telco overhead</h3><p>Agents/tracers add CPU + latency; perf testing is mandatory. <em>Balance capacity vs depth; discipline on debug logs &amp; profilers in prod PoVs.</em></p></div>
+        <div class="card"><span class="tag">Governance</span><h3>Security-gated SLA</h3><p>Sev1 = <code style="font-family:var(--mono);color:var(--amber);font-size:12px">15m response · 1h restore · 1d resolve</code>. Critical vuln with no fix auto-blocks deploy. <em>Slower delivery, enforced safety.</em></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 OUTCOME -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Outcome</div><h2 class="rise">Closed-Won — and positioned for the next play</h2></div>
+    <div class="body rise">
+      <ul class="clean" style="max-width:60ch">
+        <li><mark>Multiple Closed-Won</mark> across SDE, Operations, and Security workstreams.</li>
+        <li>A <span>3-year ramp</span> adoption path with active guidance built in.</li>
+        <li>Influenced the RFP and won the <span>observability partner</span> seat for the TM Forum Catalyst.</li>
+        <li>Expansion into <span>LLM Observability</span> and <span>Incident Response</span>.</li>
+      </ul>
+      <p class="kicker" style="margin-top:26px">// add your real numbers here: ARR · seats/footprint · MTTR improvement · adoption</p>
+    </div>
+  </section>
+
+  <!-- 12 REFLECTIONS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Reflections</div><h2 class="rise">What I'd keep, change, and what it taught me</h2></div>
+    <div class="body rise">
+      <div class="cards c3">
+        <div class="card"><span class="tag" style="color:var(--green)">Went well</span><p style="color:var(--text)">The RCA build-vs-buy reframe; reframing incident management for the CIO as reactive→proactive in business terms; keeping IOH's trusted partners inside the deal.</p></div>
+        <div class="card"><span class="tag" style="color:var(--amber)">Do differently</span><p style="color:var(--text)">Align with the customer's IS function earlier; triage COTS instrumentability before the PoV; get ahead of SAST accuracy concerns proactively.</p></div>
+        <div class="card"><span class="tag" style="color:var(--cyan)">Learned</span><p style="color:var(--text)">In a managed-services-led enterprise, adoption is the product. And the senior move on AI was not building the model — it was owning the integration and governance around a validated one.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 HOOKS -->
+  <section class="slide">
+    <div class="head"><div class="eyebrow rise">Let's go deeper</div><h2 class="rise">Ask me about</h2></div>
+    <div class="body rise">
+      <div class="hooks">
+        <div class="hook"><div class="q">architecture</div><p>How the loop closes — <code style="font-family:var(--mono);color:var(--cyan);font-size:13px">sys_id</code> and <code style="font-family:var(--mono);color:var(--cyan);font-size:13px">monitor_id</code>.</p></div>
+        <div class="hook"><div class="q">model</div><p>Why fine-tuning a general model wouldn't close the gap.</p></div>
+        <div class="hook"><div class="q">instrumentation</div><p>What can't be instrumented — and what I did about it.</p></div>
+        <div class="hook"><div class="q">performance</div><p>Quantifying and mitigating agent overhead in a telco.</p></div>
+        <div class="hook"><div class="q">governance</div><p>The human-in-the-loop decision point and the partner RACI.</p></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="chrome">
+  <div class="counter"><b id="cur">01</b> / <span id="tot">14</span></div>
+  <div class="hint">← → or space to navigate</div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let i = 0;
+  const cur = document.getElementById('cur');
+  const tot = document.getElementById('tot');
+  const prog = document.getElementById('progress');
+  tot.textContent = String(total).padStart(2,'0');
+  function show(n){
+    i = Math.max(0, Math.min(total-1, n));
+    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+    cur.textContent = String(i+1).padStart(2,'0');
+    prog.style.width = ((i+1)/total*100)+'%';
+  }
+  function next(){ show(i+1); } function prev(){ show(i-1); }
+  document.addEventListener('keydown', e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ show(0); } else if(e.key==='End'){ show(total-1); }
+  });
+  document.getElementById('deck').addEventListener('click', e=>{
+    const x = e.clientX / window.innerWidth;
+    if(x > 0.66) next(); else if(x < 0.33) prev();
+  });
+  let tx=0;
+  addEventListener('touchstart',e=>tx=e.changedTouches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>50){dx<0?next():prev();}},{passive:true});
+  show(0);
+</script>
+</body>
+</html>
