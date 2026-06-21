@@ -351,3 +351,119 @@
 ### Q: "If you were doing this deal again from scratch, what's the one thing you'd change?"
 
 **A:** "Engage the IS function from day one. We spent months building technical alignment with the platform engineering team and the CIO, but the IS function controlled procurement timelines and had their own evaluation criteria. We were nearly blindsided by a parallel workstream we didn't know about. In complex enterprise deals, technical win is necessary but not sufficient — you have to map the procurement process and engage every stakeholder, even the ones who seem administrative."
+
+---
+
+# What Went Well — Technical Capability Deep Dive
+
+These are the things that worked and why. The hindsight callouts in the deck cover what I'd change — this section covers what I'd repeat.
+
+## 1. Single Trace ID as the Architectural Foundation
+
+The decision to anchor everything on **one trace ID across metrics, traces, logs, RUM sessions, and security findings** was the single most impactful technical choice. It meant:
+
+- An APM trace ID shows up in every log line (`dd.trace_id`), every RUM session, every security finding.
+- Engineers click from a slow API response → database lock → container resource constraint → network blip in one flow. No tab-switching, no mental correlation.
+- When Bits AI SRE investigates, it traverses this same graph — it's not stitching together separate data stores.
+
+**Why it worked:** IOH's previous tooling had APM in one place, logs in another, infra metrics in a third. The correlation gap wasn't a feature gap — it was an architecture problem. Solving it at the trace ID level meant every module we added automatically inherited correlation.
+
+## 2. Cluster Agent Architecture for Kubernetes
+
+The **Cluster Agent + DaemonSet** pattern was the right call at IOH's scale:
+
+- **Reduced API Server load** — instead of every node agent independently polling for metadata, the Cluster Agent centralises it and distributes to node agents.
+- **Leader election for singleton checks** — kube_state_metrics, external metrics, custom checks that should only run once per cluster.
+- **Auto-discovery** — new pods get instrumented automatically. No manual config per deployment.
+- **DBM coordination** — the Cluster Agent assigns one agent per database instance across the cluster. No duplicate connections, no duplicate metrics.
+
+**Why it worked:** Multi-cluster (on-prem + EKS + GKE + AKS) meant the alternative — manual DaemonSet configs per cluster — would have been an operational nightmare. The Cluster Agent abstracted that away.
+
+## 3. Embedded DevSecOps (Not Bolted On)
+
+The decision to **embed SAST/SCA/IAST/RASP into the same platform as observability** — rather than using standalone security tools — created compounding advantages:
+
+- **One agent** collects APM traces AND runtime security telemetry. No second agent, no second deployment.
+- **SAST finding → APM trace → RUM error** — a vulnerability found in code can be linked to the production trace that exercises it, and to the user session that hit it. Standalone SAST tools can't do this.
+- **One ServiceNow integration** for both ops incidents and security findings. Two ticket queues, same bidirectional plumbing. Cut integration surface by 50%.
+- **Enforcement gate in CI/CD** — Datadog's policy engine evaluates SAST/SCA findings and blocks the GitLab pipeline on critical findings. Not a dashboard warning — a hard stop.
+
+**Why it worked:** IOH evaluated standalone SAST/DAST tools. The argument that won: "your security team already lives in Datadog for incident investigation — adding security findings to the same platform means zero context-switching and automatic correlation to production impact."
+
+## 4. Bits AI SRE Over Custom Agent
+
+Choosing a **purpose-built AI system** over building a custom LLM agent was the most consequential architecture decision:
+
+- **Accuracy from day one** — trained on 1T+ observability datapoints (verify figure), purpose-built for root cause analysis. A general LLM with MCP tool calls couldn't match this without months of fine-tuning and evaluation framework development.
+- **Testable target** — Bits AI has measurable accuracy benchmarks. A custom agent would have been "we think it works" with no eval framework.
+- **Credible TM Forum submission** — IOH's champion needed a validated, defensible AI capability for the Catalyst programme. "We built our own agent in 3 months" wouldn't have passed scrutiny.
+- **Team effort redirected productively** — instead of building a model, the team built the **integration and governance layer**: event routing, ServiceNow bidirectional sync, human-in-the-loop approvals, feedback loops. That's where the genuinely custom work was.
+
+**Why it worked:** The senior move on AI wasn't building the model — it was recognising that the model was a commodity and the integration/governance around it was the differentiator.
+
+## 5. Closed-Loop Incident Architecture
+
+The **8-step closed loop** (detect → ticket → diagnose → root cause → remediate → verify → close → learn) worked because of two technical details:
+
+- **`sys_id` routing** — Bits AI's finding is posted to the exact ServiceNow ticket via the incident's `sys_id`. No ambiguity, no matching by title string.
+- **`u_datadog_monitor_id` back-reference** — when ServiceNow resolves the ticket, the Business Rule uses this custom field to close the exact Datadog alert. Bidirectional, deterministic.
+- **No orphans** — the same alert can't create duplicate tickets (deduplication by monitor ID), and a resolved ticket always closes its Datadog counterpart.
+
+**Why it worked:** Previous ITSM integrations at IOH were one-way webhooks — Datadog → ServiceNow, fire and forget. Tickets stayed open after alerts resolved. Alerts stayed open after tickets closed. The bidirectional sync eliminated this entirely.
+
+## 6. Secure Transport Design
+
+The **multi-path egress architecture** addressed IOH's regulatory and security requirements without compromising telemetry flow:
+
+- **HTTPS 443** as default for internet-reachable segments.
+- **AWS PrivateLink** for AWS workloads — traffic stays on Amazon's backbone, never touches the public internet.
+- **Azure Private Endpoint** and **GCP Private Service Connect** — same principle, per-cloud.
+- **Private Agent Gateway** (TCP 10516) for air-gapped on-prem segments — agents send to an internal proxy, the proxy forwards to Datadog SaaS.
+
+**Why it worked:** A telco handling 95M subscribers has regulatory obligations around data egress. Offering multiple transport paths — with private connectivity as the default for cloud workloads — de-risked the security conversation and avoided a multi-month InfoSec review that could have stalled deployment.
+
+## 7. RUM + Synthetics Combination
+
+Deploying **both RUM and Synthetics** (not just one) gave IOH two complementary signals:
+
+- **RUM** = real user data. Actual Core Web Vitals from real devices, real networks, real geographies. This is ground truth — but it's reactive (you see problems after users hit them).
+- **Synthetics** = proactive probes. API tests and browser journeys running from global locations on a schedule. Catches outages, SSL expiry, DNS failures, broken user flows **before any user reports them**.
+- **Both linked to APM** — a synthetic test failure triggers the same investigation path as a RUM error. Trace ID connects them to the backend.
+
+**Why it worked:** At 95M subscribers, even 30 seconds of downtime before detection is thousands of affected users. Synthetics bought IOH detection speed; RUM bought them accuracy. Together: fast detection + real user validation.
+
+## 8. ServiceNow as Single ITSM Surface
+
+Using **one ServiceNow integration for both observability incidents and security findings** was an architecture simplification that paid dividends:
+
+- Same webhook, same field mapping, same Business Rules — just different ticket categories.
+- Security teams and ops teams use the same ITSM workflows. No separate security ticketing system.
+- Vulnerability lifecycle (found → ticketed → fixed → re-scanned → auto-closed) uses the same bidirectional sync as incident lifecycle.
+
+**Why it worked:** IOH's managed services team was already trained on ServiceNow workflows. Adding a separate security ticketing tool would have meant separate training, separate integrations, separate SLAs. Consolidating onto one ITSM surface reduced operational overhead and adoption friction.
+
+## 9. Phased 3-Year Adoption Ramp
+
+The **phased rollout** (P1: Infra + APM → P2: Security + RUM → P3: AIOps + autonomy) was a technical risk mitigation strategy:
+
+- **P1 establishes the data foundation** — you can't do AI-driven root cause analysis without correlated metrics, traces, and logs. P1 builds the data lake.
+- **P2 adds security and user experience** — these depend on P1's instrumentation being stable and adopted.
+- **P3 enables autonomy** — auto-remediation and Bits AI SRE only work when the underlying data is trusted and the team knows how to validate AI findings.
+
+**Why it worked:** Deploying 16 modules simultaneously would have overwhelmed the ops team and created alert fatigue from day one. Phasing meant each module got proper tuning, threshold calibration, and team training before the next layer was added.
+
+---
+
+# Summary: Technical Capability Wins
+
+| Capability | What Went Well | Compounding Effect |
+|---|---|---|
+| Single trace ID | Unified correlation across all signals | Every new module inherits correlation automatically |
+| Cluster Agent | Scalable K8s monitoring, no duplicates | Multi-cluster across 4 environments, zero manual config |
+| Embedded DevSecOps | One agent, one integration, one platform | 50% less integration surface, automatic security↔observability correlation |
+| Bits AI SRE | Accuracy from day one, credible for TM Forum | Team effort redirected to genuinely custom integration work |
+| Closed-loop incident | Deterministic routing via sys_id | Zero orphaned tickets/alerts, measurable MTTR |
+| Secure transport | Multi-path egress, PrivateLink/PSC | De-risked InfoSec review, no deployment delays |
+| RUM + Synthetics | Proactive + reactive user experience | Fast detection + real user validation |
+| ServiceNow consolidation | One ITSM for ops + security | Lower adoption friction, unified workflow |
+| Phased rollout | Data foundation → security → autonomy | Each phase builds trust for the next |
