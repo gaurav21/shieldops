@@ -222,7 +222,7 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
         <div style="width:52px;height:52px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--white)">GS</div>
         <div>
           <p style="font-family:'Syne',sans-serif;font-weight:600;font-size:.95rem;color:var(--white)">Gaurav Sharma</p>
-          <p style="font-size:.78rem;color:rgba(255,255,255,.45)">Sales Engineer · Datadog</p>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45)">Sr. Enterprise Sales Engineer · Datadog</p>
         </div>
       </div>
     </div>
@@ -321,7 +321,7 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
     <div>
       <p class="label">My Role + Deal Anatomy</p>
       <h2 class="title" style="margin-bottom:16px">Technical lead.<br>Architecture owner.<br><span class="gold">MEDDIC-qualified.</span></h2>
-      <p style="font-size:.85rem;color:var(--text-2);line-height:1.6;max-width:420px;margin-bottom:16px">Owned win strategy, solution architecture, and CIO relationship. Every major technical decision in this talk was mine. Partner executed instrumentation.</p>
+      <p style="font-size:.85rem;color:var(--text-2);line-height:1.6;max-width:420px;margin-bottom:16px">Owned win strategy, solution architecture, and CIO relationship. I owned the solution architecture and the key technical decisions; the partner team executed the build.</p>
       <div class="role-cards">
         <div class="rc" style="background:var(--gold-tint);border:1px solid rgba(201,162,39,.3)"><div class="rl" style="color:var(--gold)">Datadog (me)</div><div class="rd">Architected · Strategised</div></div>
         <div class="rc" style="background:var(--blue-bg);border:1px solid rgba(21,101,192,.2)"><div class="rl" style="color:var(--blue)">PT MII (Partner)</div><div class="rd">Executed · Implemented</div></div>
@@ -330,7 +330,7 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
     </div>
     <div>
       <div class="meddic-grid" style="grid-template-columns:1fr 1fr;margin-top:0">
-        <div class="mc" style="grid-column:1/-1"><div class="bar" style="background:var(--gold)"></div><div class="lt" style="color:var(--gold)">M</div><div class="wd" style="color:var(--gold)">Metrics</div><p><strong>MTTR</strong> hours → &lt;15 min. <strong>$2.1M+</strong> annual outage cost. <strong>&lt;1 min</strong> AI root cause. <strong>Zero</strong> critical vulns in prod.</p></div>
+        <div class="mc" style="grid-column:1/-1"><div class="bar" style="background:var(--gold)"></div><div class="lt" style="color:var(--gold)">M</div><div class="wd" style="color:var(--gold)">Metrics</div><p><strong>MTTR</strong> target &lt;15 min (Sev1 SLA). <strong>~$2.1M</strong> modeled annual outage exposure. <strong>&lt;1 min</strong> AI root cause (measured). <strong>Zero</strong> critical vulns in prod.</p></div>
         <div class="mc"><div class="bar" style="background:var(--blue)"></div><div class="lt" style="color:var(--blue)">E</div><div class="wd" style="color:var(--blue)">Econ. Buyer</div><p><strong>CIO</strong> — consolidate tools, reduce risk, AI Tech Co.</p></div>
         <div class="mc"><div class="bar" style="background:var(--green)"></div><div class="lt" style="color:var(--green)">D</div><div class="wd" style="color:var(--green)">Decision Criteria</div><p>Single pane, hybrid, embedded DevSecOps, AI RCA.</p></div>
         <div class="mc"><div class="bar" style="background:var(--purple)"></div><div class="lt" style="color:var(--purple)">I</div><div class="wd" style="color:var(--purple)">Pain</div><p>Reactive ops, no correlation, Sev1 = revenue loss.</p></div>
@@ -488,7 +488,9 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
         <div class="gap"><h4>45s unbenchmarked</h4><p>Assumption, not tested spec.</p></div>
       </div>
       <div style="background:var(--green-bg);border:1px solid rgba(46,125,50,.2);border-radius:10px;padding:10px 14px;margin-top:10px">
-        <p style="font-size:.78rem"><strong class="green">My call:</strong> Use <mark>Bits AI SRE</mark> (1T+ datapoints, purpose-built). Redirect effort to integration, governance, feedback loop.</p>
+        <p style="font-size:.78rem"><strong class="green">My call:</strong> Use <mark>Bits AI SRE</mark> (<!-- VERIFY: 1T+ datapoints figure before presenting -->1T+ datapoints, purpose-built). Redirect effort to integration, governance, feedback loop.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin-top:8px;line-height:1.5"><strong>Trade-off:</strong> gave up "we built our own agent" for accuracy on day one, a testable target, and a credible TM Forum submission.</p>
+        <p style="font-size:.75rem;color:var(--text-2);margin-top:4px;line-height:1.5;font-style:italic">The senior move wasn't building the model — it was building the trustworthy system around a validated one.</p>
       </div>
     </div>
     <div>
@@ -542,7 +544,7 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
         <h3 style="font-family:'Syne',sans-serif;font-size:.88rem;margin-bottom:10px">SLA Enforcement</h3>
         <div style="display:grid;gap:6px">
           <div style="display:grid;grid-template-columns:60px 1fr;gap:6px;align-items:center"><span style="font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:var(--red)">Sev 1</span><span style="font-size:.7rem;color:var(--text-2)">15m resp · 1h restore</span></div>
-          <div style="display:grid;grid-template-columns:60px 1fr;gap:6px;align-items:center"><span style="font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:var(--amber)">Sev 2</span><span style="font-size:.7rem;color:var(--text-2)">30m resp · 4h restore</span></div>
+          <div style="display:grid;grid-template-columns:60px 1fr;gap:6px;align-items:center"><span style="font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:var(--amber)">Sev 2</span><span style="font-size:.7rem;color:var(--text-2)">30m resp · 3h restore</span></div>
           <div style="display:grid;grid-template-columns:60px 1fr;gap:6px;align-items:center"><span style="font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;color:var(--blue)">Sev 3</span><span style="font-size:.7rem;color:var(--text-2)">2h resp · 8h restore</span></div>
         </div>
       </div>
