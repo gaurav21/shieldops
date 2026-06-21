@@ -467,3 +467,78 @@ The **phased rollout** (P1: Infra + APM → P2: Security + RUM → P3: AIOps + a
 | RUM + Synthetics | Proactive + reactive user experience | Fast detection + real user validation |
 | ServiceNow consolidation | One ITSM for ops + security | Lower adoption friction, unified workflow |
 | Phased rollout | Data foundation → security → autonomy | Each phase builds trust for the next |
+
+---
+
+# Acronym Legend
+
+Every acronym used in the IOH presentation deck, alphabetically.
+
+| Acronym | Full Form |
+|---|---|
+| AI | Artificial Intelligence |
+| AKS | Azure Kubernetes Service |
+| API | Application Programming Interface |
+| APM | Application Performance Monitoring |
+| AWS | Amazon Web Services |
+| CD | Continuous Delivery / Continuous Deployment |
+| CI | Continuous Integration |
+| CIO | Chief Information Officer |
+| CLS | Cumulative Layout Shift (Core Web Vital) |
+| CMDB | Configuration Management Database |
+| COTS | Commercial Off-The-Shelf (software) |
+| CVE | Common Vulnerabilities and Exposures |
+| DB / DBM | Database / Database Monitoring |
+| DC | Data Centre |
+| DNS | Domain Name System |
+| EC2 | Elastic Compute Cloud (AWS) |
+| EKS | Elastic Kubernetes Service (AWS) |
+| FCP | First Contentful Paint (Core Web Vital) |
+| GCP | Google Cloud Platform |
+| GKE | Google Kubernetes Engine |
+| HTTPS | Hypertext Transfer Protocol Secure |
+| IAST | Interactive Application Security Testing |
+| IDE | Integrated Development Environment |
+| INP | Interaction to Next Paint (Core Web Vital) |
+| IOH | Indosat Ooredoo Hutchison |
+| IS | Information Systems (internal function) |
+| ITSM | IT Service Management |
+| LCP | Largest Contentful Paint (Core Web Vital) |
+| LLM | Large Language Model |
+| MCP | Model Context Protocol |
+| MEDDIC | Metrics, Economic Buyer, Decision Criteria, Decision Process, Identify Pain, Champion |
+| MII | PT Mitra Integrasi Informatika (Datadog partner / SI) |
+| ML | Machine Learning |
+| MTTR | Mean Time To Resolve |
+| NDM | Network Device Monitoring |
+| NOC | Network Operations Centre |
+| NPM | Network Performance Monitoring |
+| OTLP | OpenTelemetry Protocol |
+| PG | PostgreSQL |
+| PSC | Private Service Connect (GCP) |
+| PT | Perseroan Terbatas (Indonesian limited company prefix) |
+| RACI | Responsible, Accountable, Consulted, Informed |
+| RAG | Retrieval-Augmented Generation |
+| RASP | Runtime Application Self-Protection |
+| RBAC | Role-Based Access Control |
+| RCA | Root Cause Analysis |
+| RUM | Real User Monitoring |
+| SAST | Static Application Security Testing |
+| SCA | Software Composition Analysis |
+| SDK | Software Development Kit |
+| SDE | Software Delivery Excellence |
+| SI | Systems Integrator |
+| SLA | Service Level Agreement |
+| SNMP | Simple Network Management Protocol |
+| SNOW | ServiceNow (abbreviation) |
+| SQLi | SQL Injection |
+| SRE | Site Reliability Engineering |
+| SSL | Secure Sockets Layer |
+| SSRF | Server-Side Request Forgery |
+| SSO | Single Sign-On |
+| TCP | Transmission Control Protocol |
+| TM Forum | TeleManagement Forum (telecom industry body) |
+| UAT | User Acceptance Testing |
+| VM | Virtual Machine |
+| VP | Vice President |
+| XSS | Cross-Site Scripting |
