@@ -105,16 +105,61 @@ def _verify_signature(payload: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, signature)
 
 
-def _build_devin_prompt(issue: dict) -> str:
-    """Build a Devin prompt from the GitHub issue payload."""
+def _build_devin_prompt(issue: dict, repo_owner: str = None, repo_name: str = None) -> str:
+    """Build a Devin prompt from the GitHub issue payload.
+    
+    Routes to specialised prompt templates for BofA demo task types
+    (migration, cloud_migration, coverage) when available.
+    """
     title = issue.get("title", "")
     body = issue.get("body", "") or ""
     number = issue.get("number", "?")
     labels = [l["name"] for l in issue.get("labels", [])]
+    task_type = issue.get("_task_type", "security")
 
-    repo_owner = os.getenv("GITHUB_REPO_OWNER", "gaurav21")
-    repo_name = os.getenv("GITHUB_REPO_NAME", "superset")
+    repo_owner = repo_owner or os.getenv("GITHUB_REPO_OWNER", "gaurav21")
+    repo_name = repo_name or os.getenv("GITHUB_REPO_NAME", "superset")
     repo_url = f"https://github.com/{repo_owner}/{repo_name}"
+
+    # ── BofA Demo: Use specialised prompts when available ──
+    if task_type == "migration" and angular_upgrade_prompt:
+        base_prompt = angular_upgrade_prompt(
+            from_version="14",
+            to_version="18",
+            repo_context=f"**Repository:** {repo_url}\n**Issue #{number}:** {title}\n\n{body}",
+        )
+        return base_prompt + "\n\n" + STRUCTURED_OUTPUT_INSTRUCTION
+
+    if task_type == "cloud_migration" and cloud_migration_prompt:
+        base_prompt = cloud_migration_prompt(
+            source_stack="Spring Boot 2.7 + IBM MQ + Oracle DB + LDAP Auth",
+            target_stack="AWS Lambda + SQS FIFO + RDS PostgreSQL + Cognito",
+            constraints=(
+                f"**Repository:** {repo_url}\n**Issue #{number}:** {title}\n\n{body}\n\n"
+                "- 99.99% uptime SLA must be maintained\n"
+                "- Message ordering guarantees must be preserved\n"
+                "- Data residency and encryption-at-rest compliance required\n"
+                "- Create PR with migration code, not just a plan document"
+            ),
+        )
+        return base_prompt + "\n\n" + STRUCTURED_OUTPUT_INSTRUCTION
+
+    if task_type == "coverage" and test_generation_prompt:
+        base_prompt = test_generation_prompt(
+            service="bofa-enterprise-services",
+            target_paths=[
+                "src/services/transaction-processing/src/main/java/com/bofa/transactions/",
+                "src/services/transaction-processing/src/main/java/com/bofa/transactions/pii/",
+                "src/services/transaction-processing/src/main/java/com/bofa/transactions/auth/",
+                "src/services/audit-service/src/",
+            ],
+            coverage_target=80,
+        )
+        # Prepend repo context
+        repo_context = f"**Repository:** {repo_url}\n**Issue #{number}:** {title}\n\n{body}\n\n"
+        return repo_context + base_prompt + "\n\n" + STRUCTURED_OUTPUT_INSTRUCTION
+
+    # ── Default: Security remediation prompt ──
 
     prompt = f"""You are an autonomous security engineer. A GitHub issue has been filed
 requesting a security remediation.
@@ -184,8 +229,9 @@ def _triage_issue(issue: dict) -> dict:
 
 async def _launch_session(issue: dict, triage_result: dict):
     """Launch a Devin session for a GitHub issue. Runs as a background task."""
-    repo_owner = os.getenv("GITHUB_REPO_OWNER", "gaurav21")
-    repo_name = os.getenv("GITHUB_REPO_NAME", "superset")
+    # BofA demo issues carry their own repo target
+    repo_owner = issue.get("_repo_owner") or os.getenv("GITHUB_REPO_OWNER", "gaurav21")
+    repo_name = issue.get("_repo_name") or os.getenv("GITHUB_REPO_NAME", "superset")
     issue_number = issue.get("number", 0)
     issue_key = f"{repo_owner}/{repo_name}#{issue_number}"
 
@@ -199,7 +245,7 @@ async def _launch_session(issue: dict, triage_result: dict):
 
     async with _semaphore:
         try:
-            prompt = _build_devin_prompt(issue)
+            prompt = _build_devin_prompt(issue, repo_owner=repo_owner, repo_name=repo_name)
             title = f"[ShieldOps] {issue.get('title', 'Security fix')}"
             tags = [
                 f"severity:{triage_result['severity']}",
@@ -660,6 +706,13 @@ async def dashboard():
 # Simulation / demo endpoints (for the dashboard)
 # ---------------------------------------------------------------------------
 
+# Import BofA demo prompt builders
+try:
+    from src.orchestrator.migration_prompts import angular_upgrade_prompt, cloud_migration_prompt
+    from src.orchestrator.coverage_prompts import test_generation_prompt, test_infra_setup_prompt
+except ImportError:
+    angular_upgrade_prompt = cloud_migration_prompt = test_generation_prompt = test_infra_setup_prompt = None
+
 _DEMO_ISSUES = {
     "flask": {
         "number": 101,
@@ -684,6 +737,62 @@ _DEMO_ISSUES = {
         "title": "[HIGH] npm audit findings — multiple frontend dependency vulnerabilities",
         "body": "postcss, semver, word-wrap ReDoS vulnerabilities in superset-frontend.",
         "labels": [{"name": "shieldops"}, {"name": "high"}, {"name": "security"}, {"name": "frontend"}],
+    },
+    # ── BofA Enterprise Demo Issues ──────────────────────────────────────
+    "angular_migration": {
+        "number": 201,
+        "title": "[CRITICAL] Angular 14 EOL — Upgrade to Angular 18",
+        "body": (
+            "Angular 14 has reached end-of-life. Running unsupported frameworks in production "
+            "violates BofA's internal security policy.\n\n"
+            "**Scope:** Large customer-facing digital banking application serving millions of retail banking customers.\n"
+            "**Architecture:** Built on shared internal component library, custom design system layered on Angular Material, "
+            "deep integrations with internal SSO/MFA, proprietary analytics SDK, third-party financial data providers.\n"
+            "**Constraint:** Multiple downstream teams consume the shared component library — upgrade cannot break their builds.\n"
+            "**Deadline:** Hard compliance-driven deadline."
+        ),
+        "labels": [{"name": "shieldops"}, {"name": "critical"}, {"name": "migration"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "bofa-digital-banking-frontend",
+        "_task_type": "migration",
+    },
+    "cloud_migration": {
+        "number": 202,
+        "title": "[CRITICAL] Notification Service — Spring Boot to AWS Lambda Migration",
+        "body": (
+            "Migrate mission-critical notification service from on-premise to AWS Lambda.\n\n"
+            "**Current Stack:** Spring Boot 2.7, IBM MQ, Oracle DB, LDAP auth\n"
+            "**Target Stack:** AWS Lambda, SQS FIFO, RDS PostgreSQL, Cognito\n"
+            "**Scale:** Several million events per day (fraud alerts, transaction confirmations, balance warnings, regulatory disclosures)\n"
+            "**Constraints:**\n"
+            "- Must maintain 99.99% uptime SLA\n"
+            "- Must preserve message ordering guarantees\n"
+            "- Must comply with data residency and encryption-at-rest requirements\n"
+            "- AWS infrastructure setup has begun; application code migration has not started"
+        ),
+        "labels": [{"name": "shieldops"}, {"name": "critical"}, {"name": "cloud-migration"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "bofa-enterprise-services",
+        "_task_type": "cloud_migration",
+    },
+    "test_coverage": {
+        "number": 203,
+        "title": "[CRITICAL] OCC Exam Prep — Test Coverage for Compliance-Critical Paths",
+        "body": (
+            "Upcoming OCC regulatory examination requires demonstration of adequate test coverage.\n\n"
+            "**Current State:** ~28% overall coverage, significantly lower on compliance-critical paths:\n"
+            "- Transaction processing: 15.2%\n"
+            "- Authentication: 23.1%\n"
+            "- Audit logging: 0% (no test infrastructure)\n"
+            "- PII handling: not measured\n\n"
+            "**Required:** Comprehensive test coverage on transaction processing, authentication, "
+            "PII handling, and audit logging paths. Focus on edge cases around error handling and data validation.\n"
+            "**Challenge:** Some services have no existing test infrastructure."
+        ),
+        "labels": [{"name": "shieldops"}, {"name": "critical"}, {"name": "coverage"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "bofa-enterprise-services",
+        "_task_type": "coverage",
     },
 }
 
