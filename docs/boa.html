@@ -137,8 +137,8 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
   <div class="hero-split" style="display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center">
     <div>
       <p class="label">Deployed Engineer · Cognition</p>
-      <h1 style="font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;letter-spacing:-2px;margin-bottom:20px;color:var(--white)">Closing BofA's <span class="gold">Angular EOL gap</span> with an autonomous AI engineer</h1>
-      <p style="font-size:.92rem;color:rgba(255,255,255,.5);max-width:520px;line-height:1.65;margin-bottom:28px">Angular 14 hit end-of-life. Your digital-banking apps still run it. Devin — Cognition's AI software engineer — can migrate them autonomously, then expand into security remediation and compliance coverage.</p>
+      <h1 style="font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;letter-spacing:-2px;margin-bottom:20px;color:var(--white)">An autonomous AI engineer <span class="gold">embedded in your org</span></h1>
+      <p style="font-size:.92rem;color:rgba(255,255,255,.5);max-width:520px;line-height:1.65;margin-bottom:28px">Devin plans, codes, tests, and ships — working in its own VM with shell, browser, and IDE. It opens PRs your team reviews, just like any engineer. Starting with Angular EOL, expanding into security remediation and compliance coverage.</p>
       <div style="display:flex;gap:12px;align-items:center">
         <div style="width:52px;height:52px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--white)">GS</div>
         <div>
@@ -147,54 +147,69 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
         </div>
       </div>
     </div>
-    <div style="display:grid;gap:12px;min-width:160px">
+    <div style="display:grid;gap:12px;min-width:175px">
       <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n">$26B</div><div class="l" style="color:rgba(255,255,255,.4)">valuation</div></div>
-      <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n">8–40×</div><div class="l" style="color:rgba(255,255,255,.4)">time savings</div></div>
-      <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n" style="font-size:1.1rem">Full Agent</div><div class="l" style="color:rgba(255,255,255,.4)">not a copilot</div></div>
+      <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n">8–40×</div><div class="l" style="color:rgba(255,255,255,.4)">time savings (AHEAD)</div></div>
+      <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n" style="font-size:1rem">SOC 2 II</div><div class="l" style="color:rgba(255,255,255,.4)">VPC · SSO · RBAC</div></div>
+      <div class="stat" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)"><div class="n" style="font-size:.9rem">Itaú · Nubank</div><div class="l" style="color:rgba(255,255,255,.4)">FinServ proven</div></div>
     </div>
   </div>
 </div>
 </div>
 
-<!-- ===== 1 · ASSISTANT vs AUTONOMOUS ===== -->
+<!-- ===== 1 · WHAT IS DEVIN (Platform Overview) ===== -->
 <div class="slide" data-bg="light">
 <div class="inner">
-  <p class="label">The Shift</p>
-  <h2 class="title" style="margin-bottom:20px">Copilots suggest. Devin <span class="gold">ships.</span></h2>
-  <div class="g3">
-    <div class="card hl">
-      <h3>Copilot</h3>
-      <p style="color:var(--red);font-weight:600;font-size:.75rem;margin-bottom:8px">HUMAN DRIVES</p>
-      <ul class="bl">
-        <li>Suggests next line of code</li>
-        <li>Requires engineer in the loop the entire time</li>
-        <li>Can't run tests, can't iterate</li>
-        <li>No context beyond the current file</li>
-        <li>Incremental productivity gain (~10–20%)</li>
-      </ul>
-    </div>
+  <p class="label">The Platform</p>
+  <h2 class="title" style="margin-bottom:6px">Not a copilot. A <span class="gold">full engineering platform.</span></h2>
+  <p class="sub" style="margin-bottom:20px">Devin works in its own isolated VM — shell, browser, IDE. It clones your repo, reads your docs, writes code, runs your test suite, iterates on failures, and opens a verified PR. Your team reviews it like any engineer's work.</p>
+  <div class="g4">
     <div class="card hl" style="border-color:var(--gold)">
-      <h3>Devin</h3>
-      <p style="color:var(--gold);font-weight:600;font-size:.75rem;margin-bottom:8px">DEVIN DRIVES · HUMAN REVIEWS</p>
-      <ul class="bl">
-        <li>Plans, writes, tests, and ships complete solutions</li>
-        <li>Works autonomously — engineer reviews the PR</li>
-        <li>Full VM: runs builds, tests, browses docs</li>
-        <li>Understands entire codebase and dependencies</li>
-        <li>Step-change productivity gain (8–40×)</li>
+      <span class="tag">Devin Cloud</span>
+      <h3>Autonomous sessions</h3>
+      <ul class="bl" style="margin-top:6px">
+        <li>Plans → codes → tests → ships PRs</li>
+        <li>Isolated VM per session</li>
+        <li><strong>Managed Devins:</strong> orchestrate 50+ parallel sessions from one coordinator</li>
+        <li>Slack, Teams, API, webhooks</li>
       </ul>
     </div>
     <div class="card">
-      <h3>Dependabot / Renovate</h3>
-      <p style="color:var(--red);font-weight:600;font-size:.75rem;margin-bottom:8px">VERSION BUMPS ONLY</p>
-      <ul class="bl">
-        <li>Bumps dependency version numbers</li>
-        <li>Opens PR — if build breaks, stops</li>
-        <li>Can't read CHANGELOGs or fix code</li>
-        <li>No understanding of breaking changes</li>
-        <li>Works for patches, fails on major upgrades</li>
+      <span class="tag">Knowledge + Playbooks</span>
+      <h3>Gets smarter over time</h3>
+      <ul class="bl" style="margin-top:6px">
+        <li><strong>Knowledge:</strong> tips, patterns, org-specific context — auto-recalled per session</li>
+        <li><strong>Playbooks:</strong> reusable task templates (migration recipes, fix patterns)</li>
+        <li>Enterprise Knowledge spans all orgs</li>
+        <li>Compounds — first migration takes hours, next 50 take minutes</li>
       </ul>
     </div>
+    <div class="card">
+      <span class="tag">Automations</span>
+      <h3>Event-driven, zero human kickoff</h3>
+      <ul class="bl" style="margin-top:6px">
+        <li>CVE scan result → Devin session → PR</li>
+        <li>CI failure → auto-triage → fix PR</li>
+        <li>GitHub/Jira/Linear label → session</li>
+        <li>Scheduled: daily QA, weekly dependency updates</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag">Devin Review + Auto-Fix</span>
+      <h3>PRs ready to merge when you look</h3>
+      <ul class="bl" style="margin-top:6px">
+        <li>Reviews its own PRs — visual QA with full browser</li>
+        <li><strong>Auto-Fix:</strong> responds to review comments, fixes flagged bugs, iterates on CI failures</li>
+        <li>MCP integrations: Datadog, Sentry, DBs, Figma</li>
+        <li>DeepWiki: auto-generated repo documentation</li>
+      </ul>
+    </div>
+  </div>
+  <div style="margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <div class="chip hi"><b>Itaú</b> — 70% vulns auto-resolved</div>
+    <div class="chip hi"><b>Nubank</b> — 8–12× efficiency, 20× cost savings</div>
+    <div class="chip hi"><b>Gumroad</b> — #1 contributor, 1,500+ merged PRs</div>
+    <div class="chip hi"><b>Mercedes-Benz</b> · <b>Ramp</b> · <b>Evinova</b></div>
   </div>
 </div>
 </div>
@@ -206,32 +221,32 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
   <h2 class="title" style="margin-bottom:28px">45 minutes together</h2>
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 14px">
-      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">01 · 4 MIN</div>
+      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">01 · 5 MIN</div>
       <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Frame</div>
-      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Cognition, Devin, why this matters now</div>
+      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Devin platform — what it is, what it isn't, why FinServ teams are adopting</div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:14px;padding:16px 14px">
       <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">02 · 8 MIN</div>
       <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Discovery</div>
-      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Your landscape, pain, what "good" looks like</div>
+      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Remediation timelines, migration backlog, compliance gaps, toil ratio</div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:14px;padding:16px 14px">
-      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--purple);margin-bottom:4px">03 · 13 MIN</div>
+      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--purple);margin-bottom:4px">03 · 15 MIN</div>
       <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Live Demo</div>
-      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Devin Cloud end-to-end on a real Angular 14→18 PR</div>
+      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">DeepWiki → Ask Devin → Session → PR → Auto-Fix → Parallel Fleet</div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 14px">
       <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">04 · 10 MIN</div>
       <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Discussion</div>
-      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Q&A, objections, security architecture</div>
+      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Security architecture, AI governance, integration with your SDLC</div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 14px">
-      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">05 · 5 MIN</div>
-      <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Path Forward</div>
-      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">Pilot scope, success criteria, buy-in</div>
+      <div style="font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:4px">05 · 7 MIN</div>
+      <div style="font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;color:var(--indigo);margin-bottom:4px">Pilot Design</div>
+      <div style="font-size:.72rem;color:var(--text-2);line-height:1.4">One repo, 2-week sprint, agreed metrics, scale from evidence</div>
     </div>
   </div>
-  <p style="margin-top:22px;font-size:.82rem;color:var(--text-2);text-align:center">The best version of this meeting is <strong style="color:var(--gold)">you talking more than me</strong>. Discovery drives the demo, not the other way around.</p>
+  <p style="margin-top:22px;font-size:.82rem;color:var(--text-2);text-align:center">The best version of this meeting is <strong style="color:var(--gold)">you talking more than me</strong>. Discovery shapes the demo — I'll show what maps to your pain.</p>
 </div>
 </div>
 
@@ -264,18 +279,18 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
 <div class="slide" data-bg="light">
 <div class="inner">
   <p class="label">Live Demo — Devin Cloud</p>
-  <h2 class="title" style="margin-bottom:6px">Proof first, then the live loop</h2>
-  <p class="sub" style="margin-bottom:22px">I'll walk through a <mark>finished Angular 14→18 PR</mark>, then show how the full Devin platform works end-to-end.</p>
+  <h2 class="title" style="margin-bottom:6px">End-to-end: from codebase understanding to <span class="gold">merged PR</span></h2>
+  <p class="sub" style="margin-bottom:22px">I'll walk through a <mark>finished Angular 14→18 PR</mark>, then show the platform capabilities that make this repeatable across your fleet.</p>
   <div class="g2">
     <div style="background:var(--white);border:2px solid var(--gold);border-radius:14px;padding:22px">
       <h3 style="font-family:'Syne',sans-serif;font-size:.88rem;margin-bottom:14px">Demo Walkthrough</h3>
-      <div class="demo-step"><div class="demo-n">01</div><div class="demo-t"><strong>DeepWiki</strong> — <span>auto-generated codebase documentation; how Devin understands your repo before writing code</span></div></div>
-      <div class="demo-step"><div class="demo-n">02</div><div class="demo-t"><strong>Ask Devin</strong> — <span>codebase Q&A: "which components still use NgModules?" before starting a session</span></div></div>
-      <div class="demo-step"><div class="demo-n">03</div><div class="demo-t"><strong>Session + Confidence Score</strong> — <span>live Devbox: shell, IDE, browser; structured output with confidence level</span></div></div>
-      <div class="demo-step"><div class="demo-n">04</div><div class="demo-t"><strong>PR Review</strong> — <span>auto-fix + visual QA; Devin Review on its own PR</span></div></div>
-      <div class="demo-step"><div class="demo-n">05</div><div class="demo-t"><strong>Automations / Auto-Triage</strong> — <span>event-driven triggers: CVE scan → session → PR, no human kickoff</span></div></div>
-      <div class="demo-step"><div class="demo-n">06</div><div class="demo-t"><strong>Playbooks + Knowledge</strong> — <span>encode your migration patterns so Devin applies them consistently</span></div></div>
-      <div class="demo-step"><div class="demo-n">07</div><div class="demo-t"><strong>Parallel Fleet + Analytics</strong> — <span>isolated VMs per session; dashboard for throughput, success rate, ACU usage</span></div></div>
+      <div class="demo-step"><div class="demo-n">01</div><div class="demo-t"><strong>DeepWiki</strong> — <span>auto-generated living documentation for any repo. Devin understands your codebase before writing a line.</span></div></div>
+      <div class="demo-step"><div class="demo-n">02</div><div class="demo-t"><strong>Ask Devin</strong> — <span>query architecture in plain English: "which components still use NgModules?" — scopes the work before a session starts.</span></div></div>
+      <div class="demo-step"><div class="demo-n">03</div><div class="demo-t"><strong>Session</strong> — <span>live isolated VM: shell, IDE, browser. Watch Devin plan, code, run tests, iterate on failures in real time.</span></div></div>
+      <div class="demo-step"><div class="demo-n">04</div><div class="demo-t"><strong>Devin Review + Auto-Fix</strong> — <span>reviews its own PR, responds to review comments, fixes flagged bugs, iterates on CI failures — PR is merge-ready when you look.</span></div></div>
+      <div class="demo-step"><div class="demo-n">05</div><div class="demo-t"><strong>Automations</strong> — <span>event-driven triggers: CVE scan → Devin session → PR. GitHub label, Jira ticket, Slack thread, webhook — zero human kickoff.</span></div></div>
+      <div class="demo-step"><div class="demo-n">06</div><div class="demo-t"><strong>Knowledge + Playbooks</strong> — <span>encode your migration patterns once. Devin auto-recalls relevant knowledge per session. Compounding returns.</span></div></div>
+      <div class="demo-step"><div class="demo-n">07</div><div class="demo-t"><strong>Managed Devins (Parallel Fleet)</strong> — <span>one coordinator launches 50+ parallel sessions across repos — each in its own VM. Session Insights dashboard tracks ACU, success rate.</span></div></div>
     </div>
     <div>
       <div class="card hl" style="margin-bottom:14px">
@@ -286,11 +301,20 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
           <li>MatLegacy* → Mat* import + template updates</li>
           <li>RxJS deprecated operator replacements</li>
           <li><code>ng build --production</code> + <code>ng test</code> green</li>
-          <li>Structured diff, rationale, and confidence score</li>
+          <li>Full diff with rationale — low-confidence areas flagged for human review</li>
+        </ul>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <span class="tag" style="color:var(--cyan)">MCP Integrations</span>
+        <h3>Connects to your toolchain</h3>
+        <ul class="bl" style="margin-top:8px">
+          <li>Datadog, Sentry — investigate production incidents in-session</li>
+          <li>Databases, Figma, Notion, Stripe — query data, read designs</li>
+          <li>Custom MCP servers — extend Devin's reach to internal tools</li>
         </ul>
       </div>
       <div style="background:var(--gold-tint);border:1.5px solid rgba(201,162,39,.3);border-radius:14px;padding:16px 18px">
-        <p style="font-size:.78rem;color:var(--indigo);line-height:1.5"><strong style="color:var(--gold)">Why Angular first:</strong> Hard EOL deadline, most-proven Devin use case, fully verifiable (build must pass), parallelisable across repos. Cloud migration = re-architecture that needs human judgment. Test coverage = the natural expand after the pilot.</p>
+        <p style="font-size:.78rem;color:var(--indigo);line-height:1.5"><strong style="color:var(--gold)">Why Angular first:</strong> Hard EOL deadline, most-proven use case, fully verifiable (build must pass), parallelisable across repos. Security remediation and compliance coverage are the natural expand.</p>
       </div>
     </div>
   </div>
@@ -364,9 +388,9 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
   </div>
   <div style="max-width:560px;margin:28px auto 0;text-align:left">
     <ul class="bl">
-      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">Deployed Engineer</strong> — I'm embedded in your org, configuring Devin for your workflows.</li>
-      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">Your team reviews PRs</strong> — same process as any engineer's work. Always in control.</li>
-      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">SOC 2 Type II</strong> — isolated VMs, SAML SSO, RBAC, full audit trail.</li>
+      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">Deployed Engineer</strong> — I'm embedded in your org. I configure Knowledge, Playbooks, and Automations for your workflows.</li>
+      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">Your team reviews PRs</strong> — branch protections, required reviewers — same process as any engineer's work.</li>
+      <li style="color:rgba(255,255,255,.75)"><strong style="color:var(--white)">SOC 2 Type II · VPC deployment</strong> — isolated VMs, SAML/OIDC SSO, RBAC, enterprise audit logs. Code never used for training.</li>
     </ul>
   </div>
   <p style="margin-top:24px;font-size:.72rem;color:rgba(255,255,255,.3)">Backup slides follow in the appendix →</p>
@@ -479,9 +503,9 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
       <ul class="bl" style="margin-top:8px">
         <li>6× faster .NET → Java migration (59 services)</li>
         <li>5× faster SQL Server migration (800 objects)</li>
-        <li>~70% security vulns auto-resolved</li>
-        <li>Test coverage doubled: ~50% → 90%+</li>
-        <li>75% of teams adopted; 1,000-dev waitlist in 5 months</li>
+        <li>~70% security vulns auto-resolved (SonarQube/Fortify/Veracode)</li>
+        <li>Test coverage: ~50% → 90%+</li>
+        <li>CTO: <em>"Devin is an important strategic investment"</em></li>
       </ul>
     </div>
     
@@ -489,22 +513,23 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
       <span class="tag" style="color:var(--green)">Nubank</span>
       <h3>100M+ customers · FinTech</h3>
       <ul class="bl" style="margin-top:8px">
-        <li>6M+ LoC monolith split</li>
-        <li>Originally scoped: 1,000+ engineers × 18 months</li>
-        <li>8–12× efficiency gains</li>
-        <li>20× cost savings vs manual engineering</li>
-        <li>Fine-tuned on their patterns → compounding improvements</li>
+        <li>6M+ LoC monolith → sub-modules</li>
+        <li>Scoped: 1,000+ engineers × 18 months → weeks</li>
+        <li>8–12× efficiency, 20× cost savings</li>
+        <li>Fine-tuned on their patterns → 4× task speed improvement</li>
+        <li>Devin built itself helper scripts, compounding gains</li>
       </ul>
     </div>
     
     <div class="card">
-      <span class="tag" style="color:var(--purple)">AHEAD</span>
-      <h3>Enterprise Technology Services</h3>
+      <span class="tag" style="color:var(--purple)">More Enterprise</span>
+      <h3>Across industries</h3>
       <ul class="bl" style="margin-top:8px">
-        <li>8–40× time savings across 8 production use cases</li>
-        <li>3 APIs built in a single day (was 4 weeks)</li>
-        <li>Productive within 2 business days</li>
-        <li>Terraform, Snowflake, Go, Salesforce, MuleSoft, Azure, dbt</li>
+        <li><strong>AHEAD</strong> — 8–40× time savings; 3 APIs in a day (was 4 weeks)</li>
+        <li><strong>Mercedes-Benz</strong> — partnership for engineering efficiency</li>
+        <li><strong>Evinova</strong> — regulated software delivery acceleration</li>
+        <li><strong>Gumroad</strong> — #1 contributor with 1,500+ merged PRs</li>
+        <li><strong>Ramp</strong> — tens of thousands of hours of tech debt fixed</li>
       </ul>
     </div>
   </div>
@@ -573,7 +598,7 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
 <div class="inner">
   <p class="label">Appendix · Security & Architecture</p>
   <h2 class="title" style="margin-bottom:6px">Built for regulated financial services</h2>
-  <p class="sub">Every design decision assumes a hostile network and a compliance audit.</p>
+  <p class="sub">Every design decision assumes a hostile network and a compliance audit. <mark>Enterprise customers: code is never used for training.</mark></p>
   <div class="g3" style="margin-top:18px">
     <div class="card">
       <span class="tag" style="color:var(--red)">Infrastructure Isolation</span>
@@ -581,29 +606,32 @@ code{font-family:'Outfit',sans-serif;font-size:.8em;color:var(--gold);background
       <ul class="bl" style="margin-top:8px">
         <li><strong>In-your-VPC</strong> deployment option — code never leaves your network</li>
         <li>Each Devin session runs in its <strong>own isolated VM</strong> — not shared-kernel containers</li>
-        <li>Code is cloned in, work is done, PR is pushed. No data persists beyond the session</li>
-        <li>VPC peering, self-hosted, and air-gapped options available</li>
+        <li>Ephemeral — no data persists beyond the session</li>
+        <li>All data encrypted in transit and at rest (AWS)</li>
+        <li>VPC peering, self-hosted, and air-gapped options</li>
       </ul>
     </div>
     <div class="card">
       <span class="tag" style="color:var(--blue)">Compliance & Audit</span>
       <h3>SOC 2 Type II certified</h3>
       <ul class="bl" style="margin-top:8px">
-        <li><strong>SOC 2 Type II</strong> — independently audited security controls</li>
-        <li><strong>Code never used for training</strong> — your code is your code</li>
-        <li><strong>SAML SSO / SCIM</strong> — enterprise identity integration</li>
-        <li><strong>RBAC</strong> — granular role-based access control</li>
-        <li><strong>Full audit trail</strong> — every action logged and traceable</li>
+        <li><strong>SOC 2 Type II</strong> — independently audited (March 2024+)</li>
+        <li><strong>Enterprise: no training on your data</strong> — contractually guaranteed</li>
+        <li><strong>SAML/OIDC SSO + SCIM</strong> — enterprise identity</li>
+        <li><strong>RBAC</strong> — session-level access control</li>
+        <li><strong>Audit logs API</strong> — enterprise-wide audit trail via v3 API</li>
+        <li><strong>IP ownership</strong> — all Devin output is your property</li>
       </ul>
     </div>
     <div class="card">
       <span class="tag" style="color:var(--green)">Human Oversight</span>
       <h3>Every change = a human-approved PR</h3>
       <ul class="bl" style="margin-top:8px">
-        <li><strong>Never auto-merges to prod</strong> — every Devin output is a PR for human review</li>
-        <li><strong>Auto-Triage is network-sandboxed</strong> — prompt-injection and exfiltration protection</li>
-        <li><strong>Pause & take over</strong> — jump into any session at any time</li>
-        <li><strong>Session-level RBAC</strong> — control who can trigger, review, and approve</li>
+        <li><strong>Never auto-merges</strong> — branch protections and required reviewers still apply</li>
+        <li><strong>Pause & take over</strong> — jump into IDE/shell at any time</li>
+        <li><strong>Session-level RBAC</strong> — control who can trigger, review, approve</li>
+        <li><strong>Secrets management</strong> — secure vault for credentials, not in plaintext</li>
+        <li><strong>Low-confidence flags</strong> — Devin marks areas it's unsure about for human review</li>
       </ul>
     </div>
   </div>
