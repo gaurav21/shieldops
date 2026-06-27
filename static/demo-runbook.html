@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BofA Demo Runbook — ShieldOps</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0E1A40;--navy-light:#162050;--navy-card:#1A2654;--gold:#C9A227;--gold-dim:#8B7118;--green:#2ECC71;--red:#E74C3C;--orange:#F39C12;--blue:#3498DB;--white:#F0F0F0;--muted:#8899BB;--border:#2A3A6A;--font-head:'Syne',sans-serif;--font-body:'Outfit',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--navy);color:var(--white);font-family:var(--font-body);font-weight:400;min-height:100vh;line-height:1.6}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--navy),var(--navy-light))}
+header h1{font-family:var(--font-head);font-weight:800;font-size:1.1rem;letter-spacing:-.5px}
+header h1 span{color:var(--gold)}
+header a{color:var(--muted);font-size:.8rem;text-decoration:none}
+header a:hover{color:var(--gold)}
+.container{max-width:1000px;margin:0 auto;padding:28px 24px 60px}
+h2{font-family:var(--font-head);font-weight:700;font-size:1.4rem;color:var(--gold);margin:32px 0 14px;letter-spacing:-.5px}
+h3{font-family:var(--font-head);font-weight:600;font-size:1rem;margin:20px 0 8px;color:var(--white)}
+h4{font-family:var(--font-head);font-weight:600;font-size:.85rem;margin:16px 0 6px;color:var(--gold)}
+p{color:var(--muted);font-size:.88rem;line-height:1.65;margin-bottom:10px}
+strong{color:var(--white)}
+.section{background:var(--navy-card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.section.gold-border{border-color:var(--gold-dim)}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:8px 0;border-bottom:1px solid rgba(42,58,106,.5);font-size:.88rem;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.checklist li:last-child{border-bottom:none}
+.checklist li::before{content:"☐";color:var(--gold);font-size:.9rem;flex-shrink:0}
+.step{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(42,58,106,.5)}
+.step:last-child{border-bottom:none}
+.step-n{font-family:var(--font-head);font-weight:800;font-size:.72rem;color:var(--gold);min-width:28px;height:28px;border:1.5px solid var(--gold-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-body{font-size:.88rem;color:var(--muted);line-height:1.55}
+.step-body strong{color:var(--white)}
+.step-body em{color:var(--gold);font-style:normal}
+.quote{background:rgba(201,162,39,.08);border-left:3px solid var(--gold);padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;font-size:.88rem;color:var(--white);font-style:italic}
+.tag{display:inline-block;font-family:var(--font-head);font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:4px;margin-right:6px}
+.tag.green{background:rgba(46,204,113,.15);color:var(--green)}
+.tag.gold{background:rgba(201,162,39,.15);color:var(--gold)}
+.tag.red{background:rgba(231,76,60,.15);color:var(--red)}
+.tag.blue{background:rgba(52,152,219,.15);color:var(--blue)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.timing{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.timing-block{background:rgba(201,162,39,.08);border:1px solid var(--gold-dim);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:120px}
+.timing-block .n{font-family:var(--font-head);font-weight:800;font-size:1.1rem;color:var(--gold)}
+.timing-block .l{font-size:.72rem;color:var(--muted);margin-top:2px}
+.emergency{background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:20px;margin-top:16px}
+.emergency h3{color:var(--red)}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Shield</span>Ops · Demo Runbook</h1>
+  <a href="/">← Control Plane</a>
+</header>
+<div class="container">
+
+<!-- PRE-DEMO CHECKLIST -->
+<h2>Pre-Demo Checklist</h2>
+<div class="section gold-border">
+  <h3>Sessions to prepare</h3>
+  <ul class="checklist">
+    <li><strong>Session A (LIVE):</strong> New session — Angular 14→17 migration prompt ready to paste. DO NOT start before the call.</li>
+    <li><strong>Session B (COMPLETED):</strong> Same prompt as Session A, already finished 2-3h before. Has a completed PR with code changes.</li>
+    <li><strong>Session C (FRONTEND TEST):</strong> Small Angular app where Devin builds, tests, and click-tests the UI. Has video recording.</li>
+  </ul>
+  <h3 style="margin-top:16px">DeepWiki prep</h3>
+  <ul class="checklist">
+    <li>bofa-digital-banking-frontend repo indexed in DeepWiki</li>
+    <li>Architecture diagrams generated</li>
+    <li>Tested an "Ask" question — good responses confirmed</li>
+  </ul>
+  <h3 style="margin-top:16px">Browser tabs (in order)</h3>
+  <ul class="checklist">
+    <li><strong>Tab 1:</strong> Slides — <a href="https://gaurav21.github.io/shieldops/boa.html" style="color:var(--gold)" target="_blank">boa.html</a></li>
+    <li><strong>Tab 2:</strong> Devin main page (app.devin.ai) — sessions list</li>
+    <li><strong>Tab 3:</strong> DeepWiki — bofa-digital-banking-frontend wiki</li>
+    <li><strong>Tab 4:</strong> Session B (completed migration) — paused at work log start</li>
+    <li><strong>Tab 5:</strong> The PR that Session B created (GitHub)</li>
+  </ul>
+</div>
+
+<!-- TIMING -->
+<h2>Timing Budget — 45 Minutes</h2>
+<div class="timing">
+  <div class="timing-block"><div class="n">1 min</div><div class="l">Intro + Title</div></div>
+  <div class="timing-block"><div class="n">2 min</div><div class="l">Devin Platform</div></div>
+  <div class="timing-block"><div class="n">7 min</div><div class="l">Discovery</div></div>
+  <div class="timing-block"><div class="n">18 min</div><div class="l">Live Demo</div></div>
+  <div class="timing-block"><div class="n">5 min</div><div class="l">Why Devin + Security</div></div>
+  <div class="timing-block"><div class="n">12 min</div><div class="l">Next Steps + Q&A</div></div>
+</div>
+
+<!-- DISCOVERY SPEAKER NOTES -->
+<h2>Discovery — Speaker Notes</h2>
+<p>These are <strong>your</strong> questions. NOT shown on slides. Stay on the Agenda or "What We've Heard" slide during this section.</p>
+<div class="section">
+  <h4>Opening (30 sec)</h4>
+  <div class="quote">"Before I show you anything, I'd love to hear from you. What's the one thing you'd most like to understand from today's conversation?"</div>
+  <p>Wait. Let them answer. Don't fill silence.</p>
+
+  <h4>Angular Migration — Deep Dive Questions</h4>
+  <div class="grid2">
+    <div>
+      <div class="step"><div class="step-n">1</div><div class="step-body"><span class="tag gold">Urgency</span><br>"Angular 14 hit end-of-life Nov 2023 — what's driving the urgency to migrate <em>now</em>? Security exposure, regulatory, or talent?"</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-body"><span class="tag gold">Scale</span><br>"How many Angular applications are we talking about? How many still on 14 or earlier?"</div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-body"><span class="tag gold">Team</span><br>"Are the original developers still around? How does a new engineer get up to speed on a legacy Angular module today?"</div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-body"><span class="tag gold">Effort</span><br>"What does a single module migration look like today? How long does it take an engineer end-to-end?"</div></div>
+    </div>
+    <div>
+      <div class="step"><div class="step-n">5</div><div class="step-body"><span class="tag gold">Impact</span><br>"What's the cost of staying on EOL frameworks? Regulatory, talent, security — what keeps you up at night?"</div></div>
+      <div class="step"><div class="step-n">6</div><div class="step-body"><span class="tag gold">Tools</span><br>"Your teams are using Copilot today — how has that been working for <em>migration-type</em> tasks specifically?"</div></div>
+      <div class="step"><div class="step-n">7</div><div class="step-body"><span class="tag gold">Open</span><br>"What's one thing you'd love to walk away from today understanding better?"</div></div>
+    </div>
+  </div>
+
+  <h4 style="margin-top:16px">What to Listen For → Demo Pivot</h4>
+  <div class="grid2">
+    <div>
+      <div class="step"><div class="step-n">→</div><div class="step-body"><strong>Engineer turnover</strong> → DeepWiki ("helps new engineers understand legacy code")</div></div>
+      <div class="step"><div class="step-n">→</div><div class="step-body"><strong>Scale problem</strong> → Parallel sessions ("kick off 20 migrations simultaneously")</div></div>
+    </div>
+    <div>
+      <div class="step"><div class="step-n">→</div><div class="step-body"><strong>Copilot gaps</strong> → Devin's autonomy ("not autocomplete — a full engineer")</div></div>
+      <div class="step"><div class="step-n">→</div><div class="step-body"><strong>Security pressure</strong> → Automated playbooks + compliance</div></div>
+    </div>
+  </div>
+
+  <h4 style="margin-top:16px">Transition to Demo</h4>
+  <div class="quote">"This is incredibly helpful. Based on what you've shared — especially [REFERENCE SPECIFIC THING] — let me show you how Devin would actually tackle this."</div>
+</div>
+
+<!-- DEMO FLOW -->
+<h2>Demo Flow — Screen by Screen</h2>
+
+<div class="section">
+  <div class="step"><div class="step-n">01</div><div class="step-body"><span class="tag blue">DEVIN HOME</span> <strong>1 min</strong><br>Show sessions list. <em>"Looks like ChatGPT but it's a full SDLC platform. Each session gets its own cloud VM."</em><br>Don't click into anything yet — just orient them.</div></div>
+
+  <div class="step"><div class="step-n">02</div><div class="step-body"><span class="tag blue">DEEPWIKI</span> <strong>3 min</strong><br>Switch to Tab 3. Show auto-generated docs for the BofA banking frontend.<br><strong>2a:</strong> Overview — module structure, services, features<br><strong>2b:</strong> Architecture diagram — show component relationships visually<br><strong>2c:</strong> Ask Devin — type a question live (see Prompts section below)</div></div>
+
+  <div class="step"><div class="step-n">03</div><div class="step-body"><span class="tag blue">KICK OFF LIVE SESSION</span> <strong>2 min</strong><br>Go to Devin Home → New Session. Paste the <strong>Live Session Prompt</strong>. Let it run ~30 seconds.<br><em>"Devin is spinning up its own VM, cloning the repo, analyzing the codebase..."</em><br><em>"In practice, you'd kick off 20 of these simultaneously. One per module."</em><br>Then: <em>"I've prepared an identical session that's already finished — let me skip ahead."</em></div></div>
+
+  <div class="step"><div class="step-n">04</div><div class="step-body"><span class="tag blue">COMPLETED SESSION</span> <strong>4 min</strong><br>Switch to Tab 4 (Session B).<br><strong>4a:</strong> Work log — walk through planning → code changes → test runs → PR<br><strong>4b:</strong> Playback slider — drag to show different stages<br><strong>4c:</strong> Code changes — zoom into NgModule→Standalone, MatLegacy→Mat<br><strong>4d:</strong> Frontend testing video — <em>"Devin booted the app, opened a browser, and verified the UI works"</em></div></div>
+
+  <div class="step"><div class="step-n">05</div><div class="step-body"><span class="tag blue">THE PR</span> <strong>2 min</strong><br>Switch to Tab 5 (GitHub PR). Show clean description, file diffs, test results.<br><em>"Your engineers review this like any other PR. Human-in-the-loop, always."</em></div></div>
+
+  <div class="step"><div class="step-n">06</div><div class="step-body"><span class="tag blue">CODE REVIEW</span> <strong>3 min</strong><br>Show Devin reviewing a PR — catching issues, suggesting fixes, autofix in one click.<br><em>"For a migration at BofA's scale, this review capability is huge."</em></div></div>
+
+  <div class="step"><div class="step-n">07</div><div class="step-body"><span class="tag green">FRONTEND TESTING (DIFFERENTIATOR)</span> <strong>2 min</strong><br>Show video of Devin clicking through login → dashboard → transactions → transfers.<br><em>"No other AI tool can do this — Cursor and Claude Code don't have a VM with a browser."</em></div></div>
+</div>
+
+<!-- DEVIN PROMPTS -->
+<h2>Devin Prompts</h2>
+
+<div class="section gold-border">
+  <h3>Pre-Completed Session Prompt</h3>
+  <p>Run 2-3 hours before the demo. This creates Session B.</p>
+  <pre style="background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:.82rem;line-height:1.55;color:var(--white);overflow-x:auto;white-space:pre-wrap;margin-top:8px">Migrate this Angular 14 digital banking frontend to Angular 17.
+
+Repo: https://github.com/gaurav21/bofa-digital-banking-frontend
+
+## Migration Scope
+
+### 1. Angular 14 → 17 Core
+- Update all @angular/* packages from ^14.1.0 to ^17.x
+- Update @angular/material and @angular/cdk from ^14.1.0 to ^17.x
+- Update rxjs from ~7.5.0 to ~7.8.x
+- Update zone.js from ~0.11.4 to ~0.14.x
+- Update TypeScript to version compatible with Angular 17
+
+### 2. NgModules → Standalone Components
+Convert ALL modules to standalone components:
+- AppModule (app.module.ts) → standalone bootstrap in main.ts
+- CoreModule → providedIn: 'root' services
+- SharedModule → remove, export standalone components
+- AccountsModule → standalone AccountsDashboardComponent with lazy route
+- TransfersModule → standalone TransferFormComponent with lazy route
+- BeforeLoginModule → standalone BeforeLoginComponent with lazy route
+- AfterLoginModule → standalone AfterLoginComponent with lazy route
+- BofaAccountCardModule → standalone BofaAccountCardComponent
+- BofaNavHeaderModule → standalone BofaNavHeaderComponent
+- BofaTransactionTableModule → standalone BofaTransactionTableComponent
+
+For each: add standalone: true, add imports: [...], remove the .module.ts file.
+
+### 3. Angular Material Legacy → Modern
+- Replace ALL MatLegacy* imports with Mat*
+- Update paths from @angular/material/legacy-* to @angular/material/*
+- Update template selectors
+
+### 4. Routing Updates
+- Convert app-routing.module.ts to standalone routes with provideRouter()
+- Use loadComponent() for lazy routes
+- Update auth.guard.ts to functional guard pattern
+
+### 5. Build & Test
+- Run ng build --configuration production — must pass zero errors
+- Run ng test (Jest) — fix any failing tests
+- Run ng serve and verify app loads in browser
+
+### 6. Frontend Visual Testing
+After migration builds:
+- Start dev server with ng serve
+- Open http://localhost:4200
+- Navigate and verify: login page renders, accounts dashboard loads with cards, transaction table renders, transfer form works, navigation header works across pages
+- Note any visual issues
+
+### 7. PR Description
+Create detailed PR: changes by category, files modified with rationale, breaking changes, low-confidence areas flagged, test results.</pre>
+</div>
+
+<div class="section">
+  <h3>Live Session Prompt (paste during demo)</h3>
+  <pre style="background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:.82rem;line-height:1.55;color:var(--white);overflow-x:auto;white-space:pre-wrap;margin-top:8px">Migrate the bofa-digital-banking-frontend repo from Angular 14 to Angular 17.
+
+Repo: https://github.com/gaurav21/bofa-digital-banking-frontend
+
+Convert all NgModules to standalone components, update Angular Material from legacy to modern imports, update RxJS and Zone.js, convert routing to standalone provideRouter(), and ensure ng build --configuration production and ng test both pass.
+
+After migration, run ng serve, open the app in the browser, and visually verify the login page, accounts dashboard, transaction table, and transfer form all render correctly.
+
+Create a PR with a detailed summary of all changes.</pre>
+</div>
+
+<div class="section">
+  <h3>Ask Devin from DeepWiki (pick one)</h3>
+  <div class="grid2">
+    <div>
+      <h4>Option A — Migration-scoped (best default)</h4>
+      <pre style="background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.82rem;color:var(--white);white-space:pre-wrap;margin-top:4px">Which components in this repo still use NgModules, and what Angular 14-specific APIs would need to change for an Angular 17 migration?</pre>
+    </div>
+    <div>
+      <h4>Option B — Architecture understanding</h4>
+      <pre style="background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.82rem;color:var(--white);white-space:pre-wrap;margin-top:4px">How does the authentication flow work? Trace the path from login through the SSO service, auth guard, and HTTP interceptor.</pre>
+    </div>
+  </div>
+</div>
+
+<!-- EMERGENCY PLAYBOOK -->
+<h2>Emergency Playbook</h2>
+<div class="emergency">
+  <h3>If Devin is slow/down</h3>
+  <p>"Devin's cloud environment is spinning up — let me show you a completed session I prepared."<br>→ Skip to Session B (Tab 4)</p>
+
+  <h3>If DeepWiki is slow</h3>
+  <p>"While DeepWiki generates its analysis — let me show you the migration session."<br>→ Skip to Screen 3</p>
+
+  <h3>If they ask about another use case</h3>
+  <p>"I focused today on Angular migration, but Devin handles [that] the same way. Let me pull up a slide on that."<br>→ Pull from appendix slides</p>
+
+  <h3>If running out of time (past 30 min)</h3>
+  <p>Cut immediately. "I want to be respectful of your time. Let me jump to next steps."<br>→ Go to Slide 9</p>
+
+  <h3>Key Principle (Nathan's feedback)</h3>
+  <p style="color:var(--gold);font-size:.95rem"><strong>"For some candidates the risk is they don't know enough. For you, the risk is you know too much and go too deep."</strong><br>Always tie back to business value. This is an exec meeting — stay high-level.</p>
+</div>
+
+</div>
+</body>
+</html>

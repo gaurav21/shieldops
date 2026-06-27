@@ -702,6 +702,13 @@ async def dashboard():
     return FileResponse(str(html_path), media_type="text/html")
 
 
+@app.get("/demo-runbook", response_class=HTMLResponse)
+async def demo_runbook():
+    """Serve the BofA exec demo runbook with speaker notes, prompts, and emergency playbook."""
+    html_path = _pathlib.Path(__file__).parent / "static" / "demo-runbook.html"
+    return FileResponse(str(html_path), media_type="text/html")
+
+
 # ---------------------------------------------------------------------------
 # Simulation / demo endpoints (for the dashboard)
 # ---------------------------------------------------------------------------
@@ -715,32 +722,40 @@ except ImportError:
 
 _DEMO_ISSUES = {
     "flask": {
-        "number": 101,
+        "number": 22,
         "title": "[CRITICAL] Flask 2.3.3 EOL — upgrade to Flask 3.x",
         "body": "Flask 2.3.3 has reached end-of-life.  Upgrade to 3.1.1.\nBreaking API changes expected.",
         "labels": [{"name": "shieldops"}, {"name": "critical"}, {"name": "security"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "superset",
     },
     "paramiko": {
-        "number": 102,
+        "number": 23,
         "title": "[LOW] Paramiko CVE-2026-44405 — SSH key validation bypass",
         "body": "Paramiko < 5.0.0 SSH key validation bypass.  Major version bump.",
         "labels": [{"name": "shieldops"}, {"name": "low"}, {"name": "security"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "superset",
     },
     "dockerfile": {
-        "number": 103,
+        "number": 24,
         "title": "[MEDIUM] Dockerfile hardening — SHA256 digests & remove dev packages",
         "body": "Pin base image digest, remove dev packages, add HEALTHCHECK, non-root user.",
         "labels": [{"name": "shieldops"}, {"name": "medium"}, {"name": "security"}, {"name": "container"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "superset",
     },
     "npm": {
-        "number": 104,
+        "number": 25,
         "title": "[HIGH] npm audit findings — multiple frontend dependency vulnerabilities",
         "body": "postcss, semver, word-wrap ReDoS vulnerabilities in superset-frontend.",
         "labels": [{"name": "shieldops"}, {"name": "high"}, {"name": "security"}, {"name": "frontend"}],
+        "_repo_owner": "gaurav21",
+        "_repo_name": "superset",
     },
     # ── BofA Enterprise Demo Issues ──────────────────────────────────────
     "angular_migration": {
-        "number": 201,
+        "number": 2,
         "title": "[CRITICAL] Angular 14 EOL — Upgrade to Angular 18",
         "body": (
             "Angular 14 has reached end-of-life. Running unsupported frameworks in production "
@@ -757,7 +772,7 @@ _DEMO_ISSUES = {
         "_task_type": "migration",
     },
     "cloud_migration": {
-        "number": 202,
+        "number": 1,
         "title": "[CRITICAL] Notification Service — Spring Boot to AWS Lambda Migration",
         "body": (
             "Migrate mission-critical notification service from on-premise to AWS Lambda.\n\n"
@@ -776,7 +791,7 @@ _DEMO_ISSUES = {
         "_task_type": "cloud_migration",
     },
     "test_coverage": {
-        "number": 203,
+        "number": 3,
         "title": "[CRITICAL] OCC Exam Prep — Test Coverage for Compliance-Critical Paths",
         "body": (
             "Upcoming OCC regulatory examination requires demonstration of adequate test coverage.\n\n"
@@ -795,6 +810,32 @@ _DEMO_ISSUES = {
         "_task_type": "coverage",
     },
 }
+
+
+@app.get("/api/scenarios")
+async def list_scenarios():
+    """Return all available demo scenarios with metadata for the dashboard."""
+    scenarios = []
+    for key, issue in _DEMO_ISSUES.items():
+        repo_owner = issue.get("_repo_owner", os.getenv("GITHUB_REPO_OWNER", "gaurav21"))
+        repo_name = issue.get("_repo_name", os.getenv("GITHUB_REPO_NAME", "superset"))
+        task_type = issue.get("_task_type", "security")
+        severity = "high"
+        for lbl in issue.get("labels", []):
+            if lbl["name"] in ("critical", "high", "medium", "low"):
+                severity = lbl["name"]
+                break
+        scenarios.append({
+            "key": key,
+            "number": issue["number"],
+            "title": issue["title"],
+            "body": issue.get("body", "")[:300],
+            "severity": severity,
+            "task_type": task_type,
+            "repo": f"{repo_owner}/{repo_name}",
+            "labels": [l["name"] for l in issue.get("labels", [])],
+        })
+    return scenarios
 
 
 @app.post("/api/simulate")
