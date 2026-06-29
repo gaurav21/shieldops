@@ -10,121 +10,127 @@
 
 ---
 
-### 0:00–1:30 — Opening & Context Setting (Slide #0: Title)
+### 0:00–1:30 — Opening (Slide #0: Title)
 
-> "Thank you for the time today. I know your calendars are packed, so I want to make this count.
+> "Thank you for the time. I want to make this 45 minutes count, so here's the format: I'll spend a few minutes on what we've researched about BofA's priorities, validate that with you, then do a live demo — not slides pretending to be a demo — tailored to exactly what matters to your team. Then we'll talk next steps.
 >
-> I'm Gaurav from Cognition — we build Devin, the AI software engineer. Before I show you anything, I want to spend a few minutes on what we've learned about BofA's priorities, validate that with you, and then do a live demo tailored to exactly what matters to your team.
->
-> Quick format: about 20 minutes of conversation, 15 minutes of live demo, and then we'll talk next steps. Sound good?"
+> Sound good? Great."
 
-**💡 Why this works:** Sets the collaborative tone. VPs hate being "pitched at" — this frames it as a working session.
+**💡 No fluff. Straight to structure. VPs respect people who respect their time.**
 
 ---
 
-### 1:30–4:00 — Why Cognition in 60 Seconds (Slide #1: Built for Regulated Industries)
+### 1:30–4:30 — The Cognition Elevator Pitch (Slide #1: Built for Regulated Industries)
 
-> "Before we get into BofA specifics — three things that matter for your context.
+> "So — who is Cognition and why should you care?
 >
-> **First — we're already in the banks.** Goldman Sachs, Itaú, Nubank, Citi. SOC 2 Type II. Zero data retention with LLM providers. This isn't our first conversation with a tier-1 financial institution.
+> We built Devin, the world's first AI software engineer. Not a copilot. Not autocomplete. A fully autonomous engineer that takes a task, plans the approach, writes the code, runs the tests, and opens a PR — all inside its own isolated cloud VM.
 >
-> **Second — Devin is a full computer, not a copilot.** It runs in its own VM — shell, browser, IDE. It can run your build, execute your test suite, spin up the frontend and visually verify nothing broke. No other AI coding tool does this.
+> Three things matter for BofA specifically:
 >
-> **Third — multi-model.** We route each sub-task to the best model. You're not betting on one AI lab staying ahead forever. The frontier shifts every six months — your investment is safe."
+> **First — we're already inside the banks.** Goldman Sachs, Citi, Itaú, Nubank — all running Devin in production. SOC 2 Type II certified. Zero data retention with LLM providers. Your code never leaves your network if you choose VPC deployment. This isn't a startup hoping to get into financial services — we're already there.
+>
+> **Second — Devin has its own computer.** This is the fundamental difference. Copilot and Cursor suggest code inside your developer's IDE. Devin runs in a full Linux VM — it has a shell, a browser, a file system, an IDE. It can install Angular CLI, run `ng build`, spin up the frontend, and visually verify the UI didn't break. No other AI coding tool can do that. When I show you the demo, you'll see it click through your application in a real browser.
+>
+> **Third — we're model-independent.** Devin routes each sub-task to the best AI model available. Planning goes to one model, coding to another, computer use to another. The AI frontier shifts every six months. With Copilot, you're locked to OpenAI. With us, your investment is future-proof.
+>
+> We're valued at $26 billion. But honestly — what matters is the results. Itaú saw 6× faster migrations. Nubank saw 20× cost savings. AHEAD saw 8-40× time savings. Let me show you why those numbers are real."
 
-*Advance slide*
-
-**💡 Timing note:** Move briskly here. This is credibility setup, not the pitch. 90 seconds max.
+**💡 This pitch does three things: (1) establishes category leadership, (2) explains the technical moat in business terms, (3) drops peer proof. All in 3 minutes.**
 
 ---
 
-### 4:00–8:00 — Research & Discovery Part 1 (Slide #2: What We Know About BofA)
+### 4:30–8:00 — Research & What We Know (Slide #2: What We Know About BofA)
 
-> "So here's what we've researched about Bank of America — and I want to check whether this maps to what your team is actually feeling.
+> "Before I show you anything, I want to share what we've researched about Bank of America — and I want you to tell me where we're right and where we're wrong.
 >
-> You run a $13.5 billion technology budget, with roughly $4 billion carved out for new strategic initiatives. Hari Gopalkrishnan was promoted to CTIO mid-2025, and his stated strategy is moving from one-off applications to enterprise-wide reusable capabilities across roughly 3,000 business processes.
+> BofA runs a $13.5 billion technology budget. Roughly $4 billion — about 30% — is carved out for new strategic initiatives, including AI. That's grown 44% over the past decade.
 >
-> His own framing of the challenge — and I'll quote him: *'This stuff is very hard to govern. If you overdo it, you stall innovation.'*
+> Hari Gopalkrishnan was promoted to CTIO mid-2025. His stated strategy is moving away from individual teams building one-off applications toward enterprise-wide reusable capabilities — across roughly 3,000 business processes. And his own framing of the challenge is telling: *'If you overdo governance, you stall innovation.'*
 >
-> That governance-versus-velocity tension is exactly where Devin fits — auditable, cited-code PRs that scale engineering throughput without loosening control."
+> That governance-versus-velocity tension? That's exactly where Devin fits. Every change Devin makes is a human-reviewed PR. Cited code, confidence scores, full rationale. You scale engineering throughput without loosening control."
 
-*Pause — pivot to the right column*
+*Pivot to right column — the three discovered areas:*
 
-> "From our previous conversations, we identified three areas where Devin maps directly to your priorities:"
-
-*Point to each card:*
-
-> "**Angular migration** — customer-facing apps still on Angular 14, which has been EOL since November 2023. Manual estimate is 6 to 8 dev-weeks per app.
+> "From our previous conversations, we've identified three areas where Devin maps to your priorities:
 >
-> **Security remediation** — the perpetual SonarQube and Veracode backlog that ties up developer capacity.
+> **Angular migration** — customer-facing apps still on Angular 14, which has been end-of-life since November 2023. Your teams estimate 6 to 8 dev-weeks per app to migrate manually.
 >
-> **OCC compliance** — test coverage gaps on compliance-critical paths, which I understand is a board-level concern."
+> **Security remediation** — the perpetual SonarQube and Veracode backlog. Every finding that sits in the queue is developer capacity not going toward innovation.
+>
+> **OCC compliance** — test coverage gaps on compliance-critical code paths. I understand examiner readiness is a board-level concern.
+>
+> Does that match what you're seeing? Anything I'm missing?"
+
+**💡 Stop talking here. Let them react. This is your first discovery moment.**
 
 ---
 
-### 🔍 ANGULAR DISCOVERY — THE KEY CONVERSATION (8:00–14:00)
+### 🔍 ANGULAR DISCOVERY (8:00–14:00)
 
-> "Now — I want to go deeper on the Angular migration specifically, because that's where we think the pilot makes the most sense. Can I ask a few questions?"
+> "Great. I want to go deeper on the Angular migration specifically, because that's where we think the pilot makes the most sense — and it's what I'll demo today."
 
-**Question 1 — Scale & Business Impact**
-> "How many Angular 14 applications are we talking about? And are these primarily customer-facing digital banking, internal tooling, or a mix?"
+**Question 1 — Scale & Business Exposure**
+> "How many Angular 14 applications are we talking about? And are these customer-facing digital banking, internal tooling, or a mix?"
 
 *Listen. Then:*
-> "And what's the downstream impact? Is the Angular EOL showing up in compliance conversations, or is it more of an engineering backlog concern right now?"
+> "And what's the real cost of staying on v14? Is it showing up in compliance conversations yet, or is it still an engineering backlog concern?"
 
-**💡 What you're listening for:** Number of apps = size of the deal. Customer-facing = higher urgency = faster procurement.
+**💡 Listening for:** Number of apps = deal size. Customer-facing = urgency. Compliance pressure = executive sponsor activation.
 
 **Question 2 — What's Blocked Progress**
-> "What's stopped the migration so far? Is it capacity — not enough hands? Complexity — breaking changes are too risky? Or is it a prioritization issue — it keeps getting bumped by feature work?"
+> "What's stopped the migration so far? Capacity — not enough hands? Complexity — too much regression risk? Or prioritization — it keeps getting bumped by feature work?"
 
-*Listen. Then depending on answer:*
+*Respond based on answer:*
 
-- If **capacity**: "That's exactly the pattern we see. Itaú had the same problem — 59 services to migrate, not enough senior engineers to do it safely. Devin ran them at 6× the speed of manual."
-- If **complexity/risk**: "Makes sense. The regression risk is real. That's why Devin's approach is different — it runs `ng build` and `ng test` in its own VM, iterates until green, and only opens the PR when everything passes. Your engineers review the output, not babysit the process."
-- If **prioritization**: "That tells me the cost of *not* doing it hasn't hit the threshold yet. But with Angular 14 EOL, every month is compliance exposure. What if you could clear 10 repos in the time it takes to manually do one?"
+- **Capacity:** "That's the pattern. Itaú had 59 services to migrate. Same problem — not enough senior engineers. Devin ran them at 6× the speed. Your engineers reviewed the PRs instead of writing the code."
+- **Complexity/Risk:** "Makes sense. The regression risk is real, especially on customer-facing apps. That's why Devin's approach matters — it runs the build, runs the tests, and spins up the frontend to visually verify nothing broke. I'll show you exactly that in the demo."
+- **Prioritization:** "Which tells me the cost hasn't crossed the threshold yet. But here's the math: if you can clear 10 repos in the time it takes to manually do one, migration goes from a multi-quarter initiative to a sprint. It stops competing with feature work."
 
-**Question 3 — Current Tooling**
-> "What AI coding tools are your teams using today? Copilot? Cursor? Something internal?"
+**Question 3 — Current AI Tooling**
+> "What AI coding tools are your teams using today?"
 
-*Listen. Then:*
-> "Got it. The key difference — those tools help your engineers write code faster. Devin *does* the migration for them. It's not autocomplete. It's an autonomous engineer that takes the ticket, reads the codebase, makes every change, runs the tests, and opens the PR. Your engineers review it like they'd review any junior engineer's work."
-
-**💡 What you're listening for:** If they have Copilot, you're not replacing it — you're adding a different capability. If they have nothing, you're the first mover.
+*Then:*
+> "The key difference: those tools help your engineers write code faster. Devin does the migration *for* them. It takes the ticket, reads the codebase, makes every change, runs the build, opens the PR. Your engineers spend 10 minutes reviewing instead of 6 weeks writing."
 
 **Question 4 — Success Criteria**
-> "If we ran a pilot on one repo — what would make it a clear win for your team? Is it time to merge? PR quality? Zero regressions? Something else?"
+> "If we ran a pilot on one repo — what would make it a clear win for your team?"
 
-*Listen carefully. Write down exactly what they say. This becomes your pilot success criteria.*
-
-> "Got it. Let me show you exactly what that looks like."
+*Write down exactly what they say. This becomes the pilot contract.*
 
 ---
 
-### 14:00–16:00 — Angular Detail + Transition to Demo (Slide #5: Angular 14 → 17+)
+### 14:00–16:00 — Business Impact Framing (Slide #3: Angular — Business Impact)
 
-> "So here's what Devin actually does on an Angular migration.
+> "Let me put some numbers around this.
 >
-> Every breaking change between 14 and 17 — NgModules to Standalone, MatLegacy to Mat, deprecated RxJS operators — Devin handles all of it. Not just the find-and-replace parts. The structural changes, the import rewiring, the template updates.
+> *[Point to stats]* Manual effort: 6 to 8 dev-weeks per app. With Devin: hours. And Devin runs 10+ repos in parallel — simultaneously, in isolated VMs.
 >
-> And critically — it validates. `ng build --production` and `ng test` must both pass. If they don't, Devin reads the error, fixes it, and re-runs. It iterates until green.
+> What that means for BofA:
 >
-> **Why lead with Angular?** Four reasons:
-> - Hard EOL — every month is compliance exposure
-> - Most proven use case — Itaú ran 59 at 6×
-> - Fully verifiable — build passes or it doesn't
-> - Parallelizable — run 10 repos simultaneously
+> **Compliance** — you eliminate EOL exposure before the next OCC review cycle. That's not a nice-to-have, that's risk reduction.
 >
-> Let me show you this live."
+> **Capacity** — your senior Angular engineers come off migration duty and go back to the $4 billion innovation budget. That's Gopalkrishnan's reusable-capability mandate, accelerated.
+>
+> **Speed** — the entire Angular backlog cleared in weeks, not quarters. This stops being a multi-quarter program and becomes a sprint.
+>
+> **Governance** — and critically, nothing about your governance changes. Every change is a PR. Branch protections, required reviewers, same approval process. Devin works inside your framework, not around it.
+>
+> Let me show you what this looks like live."
 
 ---
 
-### 16:00–18:00 — Kick Off Demo Sessions (Slide #3: Demo Transition)
+### 16:00–18:00 — Demo Setup (Slide: Demo Transition)
 
-> "Here's what I'm going to do. I'll kick off two Devin sessions right now — one for the Angular migration, one for a security vulnerability fix — so they run while I walk you through the interface.
+> "I'm going to kick off a Devin session right now on a real Angular 14 codebase. This is live — no recordings, no pre-baked outputs.
 >
-> This is real. No recordings. No slides pretending to be a demo. Devin is going to read a real codebase, make real changes, and open a real PR."
+> While it runs, I'll walk you through the interface and show you four things:
+> 1. How Devin understands a codebase before writing any code
+> 2. The actual Angular migration — every file, every test
+> 3. How it builds institutional knowledge in a Wiki that your whole team can use
+> 4. Something no other AI tool can do — visual UI testing in a real browser"
 
-*Start sessions in Devin*
+*Kick off the Devin session*
 
 ---
 
@@ -132,60 +138,70 @@
 
 ---
 
-### 18:00–20:00 — Devin Interface Overview (2 min)
+### 18:00–20:00 — Devin Interface + ASK (2 min)
 
-> "While Devin is working, let me orient you.
+> "While Devin starts working, let me orient you on the interface.
 >
-> This is Devin's workspace — it has its own IDE, its own terminal, its own browser. Full Linux VM. It's not running in your developer's IDE — it's a completely isolated environment.
+> On the left is the conversation — this is what we call ASK. You talk to Devin like you'd brief an engineer. Not prompts, not templates — natural language. 'Migrate this Angular 14 app to v17. Run the build and tests. Open a PR when green.'
 >
-> On the left is the conversation — this is where you'd give Devin instructions, just like you'd brief an engineer. On the right is what Devin is actually doing — you can see it reading files, running commands, making changes in real-time."
+> On the right is Devin's workspace — its own IDE, terminal, browser. You can see everything it's doing in real-time. Full transparency.
+>
+> ASK is also how your team interacts day-to-day. Engineers can ask Devin questions about the codebase, debug issues together, or hand off tasks. It's not a black box — it's a collaborative interface."
+
+**💡 VP hook:** "Think of ASK as how your team delegates work to Devin — same way you'd delegate to a junior engineer, except it works 24/7 and runs 10 things in parallel."
 
 ---
 
-### 20:00–26:00 — Angular Migration Walkthrough (6 min)
+### 20:00–27:00 — Angular Migration Live (7 min)
 
-Walk through the Angular session as it runs:
+Walk through the session as Devin works:
 
-> "So Devin is now reading the codebase. Watch — it's identifying every Angular 14 pattern that needs to change.
+> "So Devin is reading the codebase right now. Watch — it's identifying every Angular 14 pattern that needs to change. It's not using a generic template. It's reading *this specific codebase* and making the right changes for *this code*.
 >
-> [As Devin works] See here — it found the NgModule declarations and is converting them to standalone components. It's not using a template. It's reading *this specific codebase* and making the right changes for *this code*.
+> *[As changes appear]* See here — it's converting NgModule declarations to standalone components, updating the Material imports, replacing deprecated RxJS operators. Every file, every import, every template reference.
 >
-> [When it runs tests] Now it's running `ng build`. If this fails — and it might — watch what happens. It reads the error output, understands what broke, and fixes it. This is the loop that saves your engineers weeks.
->
-> [When PR opens] And here's the PR. Full diff, cited rationale for every change, test results attached. Your engineer reviews this exactly like they'd review any other PR. Branch protections, required reviewers — same governance process."
+> *[When build runs]* Now it's running `ng build --production`. This is the moment of truth. If this fails — and sometimes it does — watch what happens next."
 
-**💡 VP hook during demo:**
-> "Think about what just happened in [X] minutes. Your team would estimate this at 6 to 8 weeks. Now multiply that by [number of apps they mentioned]. That's the capacity unlock we're talking about."
+*If build fails:*
+> "See that? Build failure. But Devin doesn't stop. It reads the error output, understands what broke, and fixes it. This is the iteration loop that replaces 6 weeks of manual work. A human would read this error, go look at the file, figure out the fix, run the build again. Devin does that in seconds."
+
+*When build passes:*
+> "Green build. Now it runs the test suite. Same loop — if tests fail, it fixes and re-runs.
+>
+> *[When PR opens]* And here's the PR. Full diff, cited rationale for every change, test results attached. This is what your engineer reviews. 10 minutes of code review instead of 6 weeks of migration work."
+
+**💡 VP moment:**
+> "What just happened in *[X]* minutes — your team would estimate at 6 to 8 weeks. Now multiply that by however many Angular apps you have. That's the capacity unlock."
 
 ---
 
-### 26:00–29:00 — Security Vuln Fix (3 min)
+### 27:00–30:00 — Wiki: Institutional Knowledge (3 min)
 
-> "Now let me show the security session. This is the other big use case we discussed.
+> "Now let me show you something that matters a lot for an organization at BofA's scale — the Wiki.
 >
-> Devin read the CVE advisory, found every affected call site in the codebase, applied the fix, and ran the tests. This isn't Dependabot bumping a version and breaking the build — Devin fixes the actual code.
+> *[Navigate to Wiki]* As Devin works on your codebase, it automatically builds documentation — architecture decisions, patterns it discovered, dependency maps. This isn't generated docs that nobody reads. It's living institutional knowledge.
 >
-> Itaú auto-resolves 70% of their SonarQube and Veracode findings this way. One organization measured it at 20× efficiency — 30 minutes per vuln manually, 90 seconds with Devin."
+> Why does this matter? Because your mainframe COBOL developers are retiring. Your Angular experts are getting pulled onto new projects. The knowledge walks out the door. Devin captures it and makes it searchable for every engineer on the team.
+>
+> When the next developer — or the next Devin session — touches this codebase, it doesn't start from zero. It reads the Wiki first. That's compounding intelligence — every session makes the next one faster."
+
+**💡 VP hook:** "This directly addresses the 'enterprise-wide reusable capability' mandate. The knowledge isn't locked in one engineer's head — it's in the system."
 
 ---
 
-### 29:00–31:00 — Visual Testing Differentiator (2 min)
+### 30:00–33:00 — Desktop / Video: Visual UI Testing (3 min)
 
-> "One more thing I want to show you — and this is something no other AI coding tool can do.
+> "Last thing — and this is the differentiator nobody else has.
 >
-> [Show browser in Devin VM] Devin spun up the frontend and is actually clicking through the UI. It's visually verifying that the migration didn't break the user experience. For customer-facing digital banking apps, this is critical — you can't ship a migration that changes how a form renders.
+> *[Show Devin's browser/desktop]* Devin spun up the frontend in its VM and is actually running the application. Watch — it's clicking through the UI, navigating between pages, filling in forms, verifying that the migration didn't break the user experience.
 >
-> Copilot can't do this. Cursor can't do this. They don't have a browser. Devin does."
+> *[Show video recording]* It records the entire session on video. You can play this back, share it with QA, attach it to the PR. Visual proof that the application still works.
+>
+> For customer-facing digital banking applications, this is critical. You can't ship a migration that changes how a login form renders or how a transaction flow works. Devin doesn't just verify the code compiles — it verifies the user experience is intact.
+>
+> Copilot can't do this. Cursor can't do this. Claude Code can't do this. They don't have a browser. They don't have a screen. Devin does — because it runs on a full computer, not inside your editor."
 
----
-
-### 31:00–33:00 — Knowledge & Playbooks (2 min)
-
-> "Last piece — this is how we scale.
->
-> [Show Knowledge/Playbooks] Once we configure the patterns for your Angular migration, Devin applies them across every repo. You're not re-briefing it every time. Configure once, run across your fleet.
->
-> This is what Gopalkrishnan's team is trying to do with enterprise-wide reusable capabilities — except applied to engineering automation. One playbook, thousands of processes."
+**💡 This is the mic-drop moment. Let it land. Pause after.**
 
 ---
 
@@ -193,65 +209,70 @@ Walk through the Angular session as it runs:
 
 ---
 
-### 33:00–35:00 — Itaú Case Study (Slide #6)
+### 33:00–36:00 — Itaú Proof Point + Why Devin (Slides #6–7)
 
 > "Quick proof point before we talk next steps.
 >
-> Itaú Unibanco — $500 billion in assets, one of the most regulated banks in the world.
+> Itaú Unibanco — $500 billion in assets, 100,000 employees, one of the most regulated banks in the world. They deployed Devin for migration and security remediation:
 >
-> 59 services migrated from .NET to Java at 6× the speed. 800 database objects migrated at 5×. 70% of security vulnerabilities auto-resolved. Test coverage went from 50% to over 90%.
+> - 59 services migrated .NET to Java — 6× faster
+> - 800 database objects migrated — 5× faster
+> - 70% of security vulnerabilities auto-resolved
+> - Test coverage went from 50% to over 90%
 >
-> Same regulatory environment as BofA. Same complexity. Same need for auditable, verifiable changes."
+> Same regulatory environment as BofA. Same complexity. Same need for auditable changes. The model is proven.
+
+*Advance to competitive slide:*
+
+> "If you're evaluating alternatives — the honest comparison:
+>
+> **Model independence** — we route to the best model. Copilot is locked to OpenAI. The frontier shifts constantly.
+>
+> **Full computer** — other tools run in containers. No browser, no visual testing, no end-to-end verification.
+>
+> **Transformation partner** — I'm not handing you a license. I'm embedded in your org. I configure Devin's Knowledge and Playbooks for your codebase, your patterns, your CI/CD. That's the deployment model."
 
 ---
 
-### 35:00–37:00 — Competitive Differentiation (Slide #7)
+### 36:00–38:00 — Security (Slide #8)
 
-> "If you're evaluating other options — here's the honest comparison.
+> "I know this will come up in procurement, so let me address it now.
 >
-> **Model independence** — we're not locked to one AI provider. Multi-model routing means you get the best model for each task. Copilot is locked to OpenAI. Cursor is locked to whoever they partner with.
+> Each Devin session runs in its own isolated VM — not a container, a full virtual machine. Every session is ephemeral — spun up, used, destroyed.
 >
-> **Full VM** — shell, browser, IDE. Other tools run in containers. No browser testing, no visual verification.
->
-> **Transformation partner** — I'm not handing you a license and a docs page. I'm embedded in your org. I configure the Knowledge, Playbooks, and Automations specifically for your codebase and your workflows."
+> VPC deployment option — code never leaves your network. SOC 2 Type II certified. Code is never used for training — contractual, not just policy. Every change goes through your existing PR review process — branch protections, required reviewers. Your governance doesn't change."
 
 ---
 
-### 37:00–39:00 — Security Slide (Slide #8)
+### 38:00–43:00 — Next Steps & Pilot Proposal (Slide #9)
 
-> "I know security is going to come up in procurement, so let me address it upfront.
+> "Here's what I'd propose — and I want to be prescriptive about this.
 >
-> Each Devin session runs in its own isolated VM — not a container, a full virtual machine. Code never leaves your network if you choose the VPC deployment option. SOC 2 Type II certified. Code is never used for training — that's contractual, not just policy.
+> **Step one:** Pick one Angular 14 repo. Ideally something your team has already estimated manually — so we can measure the delta objectively.
 >
-> Every change Devin makes goes through your existing PR review process. Branch protections, required reviewers — your governance doesn't change."
+> **Step two:** Two-week sprint. We agree on success metrics upfront — *[reference what they said during discovery]*. Devin migrates it end-to-end. Your engineers review the PRs.
+>
+> **Step three:** If the results hold — and based on what we've seen at Itaú, Goldman, and Nubank, I'm confident they will — we expand. Angular fleet first. Then security remediation. Then compliance test coverage. That's the land-and-expand path that doesn't require you to bet big on day one.
+>
+> Three questions for you:"
 
----
+**Closing Discovery:**
+> "**One** — what repo would make sense for the pilot? Ideally customer-facing, medium complexity — something that represents the fleet.
+>
+> **Two** — who else needs to be in the room to greenlight a pilot? If there's a security review or procurement process, let's get ahead of it now.
+>
+> **Three** — what's the timeline? When's the next OCC review cycle? I want to make sure we have results before then."
 
-### 39:00–43:00 — Next Steps & Pilot Proposal (Slide #9)
-
-> "Here's what I'd propose.
->
-> **Step one:** Pick one Angular 14 repo. Ideally something your team has already estimated — so we can measure the delta.
->
-> **Step two:** Two-week sprint. Agreed success metrics upfront — [reference what they said during discovery about success criteria]. We run Devin against it, your engineers review the PRs.
->
-> **Step three:** If it works — and based on what Itaú saw, I'm confident it will — we expand. Angular fleet first. Then security remediation. Then compliance coverage.
->
-> What would make this a win for your team? And who else needs to be in the room to make a pilot decision?"
-
-**💡 Critical discovery questions at close:**
-- "What does your procurement process look like for a pilot like this?"
-- "Is there a security review that needs to happen before we can connect to a repo?"
-- "Who on your team would be the day-to-day point of contact for the pilot?"
-- "What's the timeline pressure? Is there a compliance deadline driving the Angular migration?"
+*If they push back on timing:*
+> "I get it. But here's the math — every month on Angular 14 is compliance exposure. The pilot is two weeks with minimal engineering lift from your side. The risk of doing nothing is higher than the risk of trying."
 
 ---
 
 ### 43:00–45:00 — Q&A Buffer
 
-> "What questions do you have? Happy to go deeper on anything — I have backup slides on ROI modeling, cloud migration, compliance coverage, and the full security architecture."
+> "What questions do you have? I have backup slides on ROI modeling, cloud migration use cases, compliance coverage, and the full security architecture — happy to go deep on anything."
 
-*Use appendix slides (10-15) as needed based on questions.*
+*Use appendix slides (10–15) as needed.*
 
 ---
 
@@ -259,13 +280,35 @@ Walk through the Angular session as it runs:
 
 | Objection | Response |
 |-----------|----------|
-| "We already have Copilot" | "Great — keep it. Copilot helps your engineers write code faster. Devin does the migration *for* them. Different capability, not a replacement." |
-| "How do we know the PRs are good?" | "67% merge rate — up from 34% last year. And your engineers review every PR. Branch protections don't change." |
-| "What about hallucinations / bad code?" | "Devin runs the build and tests. If they fail, it fixes and re-runs. The validation loop is built in — it doesn't ship broken code." |
-| "Security concerns — code leaving our network" | "VPC deployment option. Code never leaves your network. SOC 2 Type II. Zero training on your data — contractual." |
-| "We need to evaluate other vendors" | "Absolutely. I'd encourage it. When you do, ask one question: can it run the build? Can it open a browser and verify the UI? That's the test." |
-| "Not the right time" | "Understood. Every month on Angular 14 is compliance exposure. When does the next OCC review cycle start? We should have results before then." |
-| "Need to involve more stakeholders" | "Makes sense. Who should be in the room? I can tailor the next session to their priorities — security team gets the architecture deep-dive, engineering leads get the demo." |
+| **"We already have Copilot"** | "Keep it. Copilot helps engineers write code faster. Devin does the migration *for* them. Different capability — additive, not competitive." |
+| **"How do we know PRs are good?"** | "67% merge rate, up from 34% last year. And your engineers review every PR — same process as any human engineer's work." |
+| **"What about hallucinations?"** | "Devin runs the build and tests. If they fail, it fixes and re-runs. It also spins up the UI and visually verifies. The validation is end-to-end — not just 'does the code look right.'" |
+| **"Security — code leaving network"** | "VPC deployment. Code never leaves your network. SOC 2 Type II. Zero training on your data. Contractual." |
+| **"Need to evaluate other vendors"** | "Encourage it. Ask every vendor two questions: can it run the build? Can it open a browser and verify the UI? That's the test." |
+| **"Not the right time"** | "Every month on Angular 14 is compliance exposure. The pilot is 2 weeks, minimal lift from your team. When does the next OCC cycle start?" |
+| **"Need more stakeholders"** | "Who should be in the room? I'll tailor the next session — security team gets the architecture deep-dive, engineering leads get the hands-on demo." |
+| **"What about COBOL?"** | "That's the expand path. Mercedes-Benz: 8-month COBOL modernization compressed to 8 days in a pilot. Synechron embeds Devin specifically for COBOL modernization at major banks. Angular proves the model — then we go after mainframe." |
+
+---
+
+## DEMO FLOW CHECKLIST
+
+Before the meeting, have ready:
+- [ ] Angular 14 demo repo loaded in Devin workspace
+- [ ] Devin session pre-configured with repo access
+- [ ] Pre-completed session as backup (in case live demo stalls)
+- [ ] Wiki populated from a previous run (to show institutional knowledge)
+
+**Demo sequence:**
+1. **ASK** — type the migration prompt live, show conversational interface
+2. **Migration** — Devin reads codebase, makes changes, runs build/tests
+3. **Wiki** — show auto-generated documentation from codebase analysis
+4. **Desktop/Video** — Devin opens browser, clicks through UI, records video proof
+
+**If demo stalls or takes too long:**
+> "Let me show you a completed session from an earlier run — same codebase, same migration. I want to respect your time and show you the full output rather than watch a progress bar."
+
+Switch to pre-completed session. Never apologize for AI timing — reframe as "this is realistic, it takes X minutes for a task that takes humans Y weeks."
 
 ---
 
@@ -273,13 +316,34 @@ Walk through the Angular session as it runs:
 
 | Segment | Allocated | Hard Stop |
 |---------|-----------|-----------|
-| Opening + Why Cognition | 4 min | 4:00 |
-| Research + Discovery | 10 min | 14:00 |
-| Angular detail + demo setup | 4 min | 18:00 |
-| **Live Demo** | **15 min** | **33:00** |
-| Itaú + Why Devin + Security | 6 min | 39:00 |
-| Next Steps + Q&A | 6 min | 45:00 |
+| Opening | 1.5 min | 1:30 |
+| Cognition elevator pitch | 3 min | 4:30 |
+| Research + validation | 3.5 min | 8:00 |
+| Angular discovery | 6 min | 14:00 |
+| Business impact + demo setup | 4 min | 18:00 |
+| **Demo: ASK + interface** | **2 min** | **20:00** |
+| **Demo: Angular migration** | **7 min** | **27:00** |
+| **Demo: Wiki** | **3 min** | **30:00** |
+| **Demo: Desktop/video** | **3 min** | **33:00** |
+| Itaú + Why Devin + Security | 5 min | 38:00 |
+| Next steps + closing discovery | 5 min | 43:00 |
+| Q&A buffer | 2 min | 45:00 |
 
-**If running long on discovery (good problem):** Cut Itaú to 60 seconds, skip competitive slide (they can read it), go straight to Next Steps.
+**If running long on discovery (good sign):** Compress Itaú to 60 seconds ("Itaú — $500B bank, 59 migrations at 6×, 70% vulns auto-resolved. Same environment as BofA."). Skip competitive slide. Go straight to next steps.
 
-**If demo has issues:** Switch to the pre-recorded backup. Say: "Let me show you a completed session from earlier today so we don't waste your time waiting." Never apologize for AI reliability — it proves the point that human review is always in the loop.
+**If demo runs fast (great sign):** Use extra time to go deeper on Wiki and show how Knowledge compounds across sessions. Or pull up the security architecture slide live.
+
+---
+
+## KEY PHRASES TO LAND
+
+These are the lines that stick with VPs after the meeting:
+
+- *"6 to 8 weeks of manual work — done in hours."*
+- *"Your engineers review PRs instead of writing migration code."*
+- *"Every month on Angular 14 is compliance exposure."*
+- *"Devin works inside your governance framework, not around it."*
+- *"The $4 billion innovation budget should fund innovation — not keep the lights on."*
+- *"Copilot suggests code. Devin does the work."*
+- *"It runs the build, runs the tests, opens the browser, and verifies the UI. No other tool does that."*
+- *"Your peers are already here — Goldman, Citi, Itaú, Nubank."*
