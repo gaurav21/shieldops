@@ -264,40 +264,57 @@ code{font-family:'Inter',system-ui,sans-serif;font-size:.8em;color:var(--gold);b
 </div>
 </div>
 
-<!-- ===== 5 · USE CASE: ANGULAR (detail slide) ===== -->
+<!-- ===== 5 · USE CASE: ANGULAR (business impact) ===== -->
 <div class="slide" data-bg="light">
 <div class="inner">
   <div style="position:relative">
     <div class="case-num">01</div>
     <p class="label">Lead Use Case</p>
     <h2 class="title" style="margin-bottom:6px">Angular 14 → 17+ Migration</h2>
-    <p class="sub" style="font-size:1rem"><mark>EOL since Nov 2023.</mark> Manual estimate: 6–8 dev-weeks per app. Devin delivers a verified PR in hours.</p>
+    <p class="sub" style="font-size:1rem"><mark>EOL since Nov 2023.</mark> Every month on v14 is compliance exposure. Devin clears the backlog.</p>
   </div>
-  <div class="g2" style="margin-top:18px">
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:22px">
+    <div class="stat"><div class="n" style="color:var(--red)">6–8 wks</div><div class="l">manual effort per app</div></div>
+    <div class="stat"><div class="n" style="color:var(--green)">hours</div><div class="l">with Devin per app</div></div>
+    <div class="stat"><div class="n">10+</div><div class="l">repos in parallel</div></div>
+    <div class="stat"><div class="n">6×</div><div class="l">faster (Itaú, 59 services)</div></div>
+  </div>
+  <div class="g2" style="margin-top:20px">
     <div class="card hl">
-      <span class="tag" style="color:var(--blue)">What Devin Does</span>
-      <h3>Handles every breaking change end-to-end</h3>
-      <ul class="bl" style="margin-top:8px">
-        <li><strong>NgModules → Standalone</strong> conversion</li>
-        <li><strong>MatLegacy → Mat</strong> imports + templates</li>
-        <li><strong>RxJS</strong> deprecated operators replaced</li>
-        <li><strong>Validates:</strong> <code>ng build</code> + <code>ng test</code> must pass</li>
-        <li><strong>Iterates:</strong> fixes failures, re-runs until green</li>
-      </ul>
+      <span class="tag" style="color:var(--green)">💰 Business Impact</span>
+      <h3>What this means for BofA</h3>
+      <div style="display:grid;gap:10px;margin-top:10px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline">
+          <strong style="font-size:.85rem;white-space:nowrap;color:var(--green)">Compliance</strong>
+          <span style="font-size:.85rem;color:var(--text-2)">Eliminate EOL exposure before next OCC review cycle</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline">
+          <strong style="font-size:.85rem;white-space:nowrap;color:var(--green)">Capacity</strong>
+          <span style="font-size:.85rem;color:var(--text-2)">Free senior engineers from migration toil → back on the innovation budget</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline">
+          <strong style="font-size:.85rem;white-space:nowrap;color:var(--green)">Speed</strong>
+          <span style="font-size:.85rem;color:var(--text-2)">Clear the entire Angular backlog in weeks, not quarters</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline">
+          <strong style="font-size:.85rem;white-space:nowrap;color:var(--green)">Governance</strong>
+          <span style="font-size:.85rem;color:var(--text-2)">Every change is a human-reviewed PR. Same branch protections, same approvals</span>
+        </div>
+      </div>
     </div>
     <div>
       <div class="card" style="margin-bottom:14px">
-        <span class="tag">Why Lead With Angular</span>
-        <h3>Highest-confidence starting point</h3>
-        <ul class="bl" style="margin-top:8px">
-          <li><strong>Hard EOL</strong> — every month is compliance exposure</li>
-          <li><strong>Proven</strong> — Itaú: 59 migrations at 6×</li>
-          <li><strong>Verifiable</strong> — build + tests must pass</li>
-          <li><strong>Parallel</strong> — 10+ repos simultaneously</li>
-        </ul>
+        <span class="tag">How It Works</span>
+        <h3>Devin handles it end-to-end</h3>
+        <div style="display:grid;gap:8px;margin-top:10px">
+          <div style="display:flex;gap:10px;align-items:baseline"><span style="font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:.75rem;color:var(--gold);min-width:18px">01</span><span style="font-size:.85rem;color:var(--text-2)">Reads the codebase — understands your patterns, not a generic template</span></div>
+          <div style="display:flex;gap:10px;align-items:baseline"><span style="font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:.75rem;color:var(--gold);min-width:18px">02</span><span style="font-size:.85rem;color:var(--text-2)">Makes every breaking change across all files</span></div>
+          <div style="display:flex;gap:10px;align-items:baseline"><span style="font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:.75rem;color:var(--gold);min-width:18px">03</span><span style="font-size:.85rem;color:var(--text-2)">Runs build + tests. Fails? Reads the error, fixes, re-runs until green</span></div>
+          <div style="display:flex;gap:10px;align-items:baseline"><span style="font-family:'Inter',system-ui,sans-serif;font-weight:800;font-size:.75rem;color:var(--gold);min-width:18px">04</span><span style="font-size:.85rem;color:var(--text-2)">Opens a PR with full diff + rationale. Your team reviews like any other PR</span></div>
+        </div>
       </div>
-      <div style="background:var(--amber-bg);border:1px solid rgba(141,110,0,.2);border-radius:12px;padding:14px 18px">
-        <p style="font-size:.82rem;color:var(--amber)"><strong>Then expand:</strong> Security remediation → compliance coverage.</p>
+      <div style="background:var(--amber-bg);border:1px solid rgba(141,110,0,.2);border-radius:12px;padding:12px 16px">
+        <p style="font-size:.82rem;color:var(--amber)"><strong>Then expand:</strong> Security remediation → compliance test coverage</p>
       </div>
     </div>
   </div>
