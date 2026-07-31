@@ -22,6 +22,12 @@ COPY .env.example .
 # Create data directory
 RUN mkdir -p /app/data
 
+# Run as non-root user
+RUN groupadd --gid 1000 shieldops && \
+    useradd --uid 1000 --gid shieldops --create-home shieldops && \
+    chown -R shieldops:shieldops /app /tmp/superset
+USER shieldops
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
