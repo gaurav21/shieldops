@@ -5,7 +5,6 @@ from __future__ import annotations
 Devin does the judgment-heavy work Dependabot can't. Datadog proves the fleet is safe to run.
 """
 
-import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -100,24 +99,30 @@ class ShieldOpsOrchestrator:
         """Handle session status changes — emit metrics, run policy, post evidence."""
 
         if event == "session_created":
-            record_session_created(
-                task.devin_session.session_id if task.devin_session else "unknown",
-                task.vuln.severity.value, task.vuln.package_name)
-            await self.event_emitter.send_event(
-                f"🤖 Devin session created for {task.vuln.package_name}",
-                f"Severity: {task.vuln.severity.value}\nPredicted: {task.decision.predicted_route}",
-                "info", [f"severity:{task.vuln.severity.value}", "source:shieldops"])
-            await self.reporter.report_session_created(task)
+            try:
+                record_session_created(
+                    task.devin_session.session_id if task.devin_session else "unknown",
+                    task.vuln.severity.value, task.vuln.package_name)
+                await self.event_emitter.send_event(
+                    f"🤖 Devin session created for {task.vuln.package_name}",
+                    f"Severity: {task.vuln.severity.value}\nPredicted: {task.decision.predicted_route}",
+                    "info", [f"severity:{task.vuln.severity.value}", "source:shieldops"])
+                await self.reporter.report_session_created(task)
+            except Exception as e:
+                logger.error(f"Status change callback error (session_created): {e}")
 
         elif event in ("session_failed", "session_timeout"):
-            record_session_failed(
-                task.devin_session.session_id if task.devin_session else "unknown",
-                task.vuln.severity.value)
-            await self.event_emitter.send_event(
-                f"❌ Session failed for {task.vuln.package_name}",
-                f"Error: {task.error}", "error",
-                [f"severity:{task.vuln.severity.value}", "source:shieldops"])
-            await self.reporter.report_failure(task)
+            try:
+                record_session_failed(
+                    task.devin_session.session_id if task.devin_session else "unknown",
+                    task.vuln.severity.value)
+                await self.event_emitter.send_event(
+                    f"❌ Session failed for {task.vuln.package_name}",
+                    f"Error: {task.error}", "error",
+                    [f"severity:{task.vuln.severity.value}", "source:shieldops"])
+                await self.reporter.report_failure(task)
+            except Exception as e:
+                logger.error(f"Status change callback error ({event}): {e}")
 
         elif event == "intervention":
             await self.event_emitter.send_event(
@@ -344,20 +349,27 @@ class ShieldOpsOrchestrator:
 
     async def setup_datadog(self):
         """One-time: create dashboard and monitors."""
+        logger.info("Setting up Datadog resources...")
         errors = []
+
         try:
             dashboard_url = await self.dashboard_builder.create_or_update()
         except Exception as e:
+            logger.error(f"Dashboard creation failed: {e}")
             dashboard_url = None
-            errors.append(str(e))
+            errors.append(f"dashboard: {e}")
+
         try:
             monitors = await self.monitor_builder.create_all()
         except Exception as e:
+            logger.error(f"Monitor creation failed: {e}")
             monitors = []
-            errors.append(str(e))
+            errors.append(f"monitors: {e}")
+
         result = {"dashboard_url": dashboard_url, "monitors": monitors}
         if errors:
             result["errors"] = errors
+            logger.warning(f"Datadog setup completed with errors: {errors}")
         return result
 
     @staticmethod

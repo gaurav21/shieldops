@@ -128,7 +128,8 @@ class IssueCreator:
                 )
                 resp.raise_for_status()
                 return resp.json()
-            except httpx.HTTPError:
+            except httpx.HTTPError as e:
+                logger.warning(f"Failed to fetch existing issues, duplicates may be created: {e}")
                 return []
 
     async def _ensure_labels(self, client: httpx.AsyncClient, labels: list[str]):
@@ -157,5 +158,5 @@ class IssueCreator:
                             "color": label_colors.get(label, "ededed"),
                         },
                     )
-            except httpx.HTTPError:
-                pass
+            except httpx.HTTPError as e:
+                logger.warning(f"Failed to ensure label '{label}' exists: {e}")

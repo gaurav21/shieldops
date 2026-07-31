@@ -55,8 +55,8 @@ class ScanScheduler:
         logger.info(f"Starting scheduled scan at {datetime.utcnow().isoformat()}")
         try:
             await self.orchestrator.run_full_pipeline()
-        except Exception as e:
-            logger.error(f"Scheduled scan failed: {e}")
+        except Exception:
+            logger.exception("Scheduled scan failed")
 
     async def trigger_manual_scan(self):
         """Trigger an immediate scan (for API endpoint)."""

@@ -133,6 +133,6 @@ class DashboardBuilder:
                 for dash in resp.json().get("dashboards", []):
                     if "ShieldOps" in dash.get("title", ""):
                         return dash["id"]
-            except httpx.HTTPError:
-                pass
+            except httpx.HTTPError as e:
+                logger.warning(f"Failed to fetch existing dashboards: {e}")
         return None
