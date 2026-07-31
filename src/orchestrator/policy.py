@@ -12,15 +12,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Optional
 
-# Sensitive file paths in Apache Superset that force HUMAN_REVIEW
-SENSITIVE_PATHS = [
-    "superset/sql_lab.py",
-    "superset/views/",
-    "superset/security/",
-    "superset/db_engine_specs/",
-    "superset/connectors/",
-    "superset/models/core.py",
-]
+from ..shared.constants import SENSITIVE_PATHS
 
 SENSITIVE_KEYWORDS = ["auth", "crypto", "password", "token", "secret", "sql", "injection"]
 

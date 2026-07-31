@@ -6,11 +6,11 @@ V1 monitors kept, V2 trust monitors added.
 """
 
 import logging
-from typing import Optional
 
 import httpx
 
 from ..config import DatadogConfig
+from .datadog_base import DatadogBaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -87,33 +87,26 @@ MONITORS = [
 ]
 
 
-class MonitorBuilder:
+class MonitorBuilder(DatadogBaseClient):
     """Creates Datadog monitors."""
 
     def __init__(self, config: DatadogConfig):
-        self.config = config
-        self.base_url = f"https://api.{config.site}/api/v1"
-        self.headers = {
-            "DD-API-KEY": config.api_key,
-            "DD-APPLICATION-KEY": config.app_key,
-            "Content-Type": "application/json",
-        }
+        super().__init__(config, api_version="v1", needs_app_key=True)
 
     async def create_all(self) -> list[dict]:
-        if not self.config.api_key or not self.config.app_key:
+        if not self.has_keys(need_app_key=True):
             logger.warning("No DD keys — skipping monitor creation")
             return []
 
         created = []
-        async with httpx.AsyncClient(timeout=15) as client:
-            for monitor_def in MONITORS:
-                try:
-                    resp = await client.post(f"{self.base_url}/monitor",
-                                            headers=self.headers, json=monitor_def)
+        for monitor_def in MONITORS:
+            try:
+                resp = await self._post("monitor", json=monitor_def)
+                if resp:
                     resp.raise_for_status()
                     data = resp.json()
                     created.append({"id": data["id"], "name": data["name"]})
                     logger.info(f"Created monitor: {data['name']} (ID: {data['id']})")
-                except httpx.HTTPError as e:
-                    logger.error(f"Failed to create monitor '{monitor_def['name']}': {e}")
+            except httpx.HTTPError as e:
+                logger.error(f"Failed to create monitor '{monitor_def['name']}': {e}")
         return created
